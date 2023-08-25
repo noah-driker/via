@@ -1,0 +1,884 @@
+	.text
+	.file	"via_uhci_harness.c"
+	.section	.text.main,"axG",@progbits,main,comdat
+	.globl	main                    # -- Begin function main
+	.p2align	4, 0x90
+	.type	main,@function
+main:                                   # @main
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%rbx
+	andq	$-32, %rsp
+	subq	$192, %rsp
+	movq	%rsp, %rbx
+	.cfi_offset %rbx, -24
+	xorl	%eax, %eax
+	movl	%eax, %ecx
+	cmpl	$0, __asan_option_detect_stack_use_after_return
+	movq	%rcx, 120(%rbx)         # 8-byte Spill
+	je	.LBB0_2
+# %bb.1:
+	movl	$352, %edi              # imm = 0x160
+	callq	__asan_stack_malloc_3
+	movq	%rax, 120(%rbx)         # 8-byte Spill
+.LBB0_2:
+	movq	120(%rbx), %rax         # 8-byte Reload
+	cmpq	$0, %rax
+	movq	%rax, %rcx
+	movq	%rax, 112(%rbx)         # 8-byte Spill
+	movq	%rcx, 104(%rbx)         # 8-byte Spill
+	jne	.LBB0_4
+# %bb.3:
+	movq	%rsp, %rax
+	addq	$-352, %rax             # imm = 0xFEA0
+	andq	$-32, %rax
+	movq	%rax, %rsp
+	movq	%rax, 104(%rbx)         # 8-byte Spill
+.LBB0_4:
+	movq	104(%rbx), %rax         # 8-byte Reload
+	movq	%rax, 128(%rbx)
+	movq	%rax, %rcx
+	addq	$32, %rcx
+	movq	%rax, %rdx
+	movq	$1102416563, (%rax)     # imm = 0x41B58AB3
+	movq	$.L___asan_gen_, 8(%rax)
+	movq	$main, 16(%rax)
+	shrq	$3, %rax
+	movq	%rax, %rsi
+	addq	$2147450880, %rsi       # imm = 0x7FFF8000
+	movabsq	$-506381209984437775, %rdi # imm = 0xF8F8F8F8F1F1F1F1
+	movq	%rdi, 2147450880(%rax)
+	movabsq	$-506381209866536712, %rdi # imm = 0xF8F8F8F8F8F8F8F8
+	movq	%rdi, 2147450888(%rax)
+	movq	%rdi, 2147450896(%rax)
+	movq	%rdi, 2147450904(%rax)
+	movabsq	$-868082073972705032, %rdi # imm = 0xF3F3F3F3F8F8F8F8
+	movq	%rdi, 2147450912(%rax)
+	movl	$-202116109, 2147450920(%rax) # imm = 0xF3F3F3F3
+	movb	.L__sancov_gen_(%rip), %r8b
+	addb	$1, %r8b
+	movb	%r8b, .L__sancov_gen_(%rip)
+	movq	%rbp, %rax
+	movq	__sancov_lowest_stack@GOTTPOFF(%rip), %rdi
+	movq	%fs:(%rdi), %rdi
+	cmpq	%rdi, %rax
+	movq	%rcx, 96(%rbx)          # 8-byte Spill
+	movq	%rdx, 88(%rbx)          # 8-byte Spill
+	movq	%rsi, 80(%rbx)          # 8-byte Spill
+	movq	%rax, 72(%rbx)          # 8-byte Spill
+	jae	.LBB0_6
+# %bb.5:
+	movq	__sancov_lowest_stack@GOTTPOFF(%rip), %rax
+	movq	72(%rbx), %rcx          # 8-byte Reload
+	movq	%rcx, %fs:(%rax)
+.LBB0_6:
+	movl	$0, 164(%rbx)
+	movq	80(%rbx), %rax          # 8-byte Reload
+	movq	$0, 4(%rax)
+	movq	$0, 12(%rax)
+	movq	$0, 20(%rax)
+	movq	$0, 28(%rax)
+	movabsq	$module_path, %rdi
+	movl	$512, %esi              # imm = 0x200
+	movabsq	$.str, %rdx
+	movb	$0, %al
+	callq	snprintf
+	movabsq	$stderr, %rcx
+	shrq	$3, %rcx
+	cmpb	$0, 2147450880(%rcx)
+	je	.LBB0_8
+# %bb.7:
+	movabsq	$stderr, %rdi
+	callq	__asan_report_load8_noabort
+	#APP
+	#NO_APP
+.LBB0_8:
+	movq	stderr, %rdi
+	movabsq	$.str.1, %rsi
+	movb	$0, %al
+	callq	fprintf
+	movl	loglevel, %ecx
+	movq	96(%rbx), %rdi          # 8-byte Reload
+	movl	$256, %esi              # imm = 0x100
+	movabsq	$.str.2, %rdx
+	movl	%eax, 68(%rbx)          # 4-byte Spill
+	movb	$0, %al
+	callq	snprintf
+	movl	%eax, 64(%rbx)          # 4-byte Spill
+	callq	lkl_fuzz_init_fuzzer
+	movabsq	$lkl_host_ops, %rdi
+	movq	96(%rbx), %rsi          # 8-byte Reload
+	movl	%eax, 60(%rbx)          # 4-byte Spill
+	movb	$0, %al
+	callq	lkl_start_kernel
+	movl	%eax, 56(%rbx)          # 4-byte Spill
+	movb	$0, %al
+	callq	setup_via_uhci_device
+	movabsq	$module_path, %rdi
+	movl	$258, %esi              # imm = 0x102
+	movl	%eax, 52(%rbx)          # 4-byte Spill
+	callq	dlopen
+	movq	%rax, 144(%rbx)
+	cmpq	$0, 144(%rbx)
+	jne	.LBB0_12
+.Ltmp0:                                 # Block address taken
+# %bb.9:                                # %if.then
+	movabsq	$stderr, %rax
+	shrq	$3, %rax
+	movb	.L__sancov_gen_+1, %cl
+	addb	$1, %cl
+	movb	%cl, .L__sancov_gen_+1
+	cmpb	$0, 2147450880(%rax)
+	je	.LBB0_11
+# %bb.10:
+	movabsq	$stderr, %rdi
+	callq	__asan_report_load8_noabort
+	#APP
+	#NO_APP
+.LBB0_11:
+	movq	stderr, %rdi
+	movq	%rdi, 40(%rbx)          # 8-byte Spill
+	callq	dlerror
+	movq	40(%rbx), %rdi          # 8-byte Reload
+	movabsq	$.str.3, %rsi
+	movabsq	$module_path, %rdx
+	movq	%rax, %rcx
+	movb	$0, %al
+	callq	fprintf
+	movl	$-1, 164(%rbx)
+	movl	$1, 140(%rbx)
+	jmp	.LBB0_17
+.LBB0_12:                               # %if.end
+	movq	144(%rbx), %rdi
+	movabsq	$.str.4, %rsi
+	callq	dlsym
+	movq	%rax, this_module
+	cmpq	$0, this_module
+	jne	.LBB0_16
+.Ltmp1:                                 # Block address taken
+# %bb.13:                               # %if.then12
+	movabsq	$stderr, %rax
+	shrq	$3, %rax
+	movb	.L__sancov_gen_+2, %cl
+	addb	$1, %cl
+	movb	%cl, .L__sancov_gen_+2
+	cmpb	$0, 2147450880(%rax)
+	je	.LBB0_15
+# %bb.14:
+	movabsq	$stderr, %rdi
+	callq	__asan_report_load8_noabort
+	#APP
+	#NO_APP
+.LBB0_15:
+	movq	stderr, %rdi
+	movq	%rdi, 32(%rbx)          # 8-byte Spill
+	callq	dlerror
+	movq	32(%rbx), %rdi          # 8-byte Reload
+	movabsq	$.str.5, %rsi
+	movabsq	$module_path, %rdx
+	movq	%rax, %rcx
+	movb	$0, %al
+	callq	fprintf
+	movl	$-1, 164(%rbx)
+	movl	$1, 140(%rbx)
+	jmp	.LBB0_17
+.Ltmp2:                                 # Block address taken
+.LBB0_16:                               # %if.end15
+	movb	.L__sancov_gen_+3, %al
+	addb	$1, %al
+	movb	%al, .L__sancov_gen_+3
+	movq	this_module, %rdi
+	callq	lkl_sys_init_loaded_module
+	movl	$0, 140(%rbx)
+.LBB0_17:                               # %cleanup
+	movabsq	$-506381209866536712, %rax # imm = 0xF8F8F8F8F8F8F8F8
+	movq	80(%rbx), %rcx          # 8-byte Reload
+	movq	%rax, 4(%rcx)
+	movq	%rax, 12(%rcx)
+	movq	%rax, 20(%rcx)
+	movq	%rax, 28(%rcx)
+	movl	140(%rbx), %edx
+	movl	%edx, %eax
+	movl	%eax, %edx
+	movl	$__sancov_gen_cov_switch_values, %esi
+	movq	%rax, %rdi
+	movq	%rax, 24(%rbx)          # 8-byte Spill
+	movl	%edx, 20(%rbx)          # 4-byte Spill
+	callq	__sanitizer_cov_trace_switch
+	movq	24(%rbx), %rax          # 8-byte Reload
+	testq	%rax, %rax
+	je	.LBB0_19
+	jmp	.LBB0_25
+.LBB0_25:                               # %cleanup
+.Ltmp3:                                 # Block address taken
+# %bb.18:                               # %cleanup.cleanup.cont_crit_edge19
+	movb	.L__sancov_gen_+4, %al
+	addb	$1, %al
+	movb	%al, .L__sancov_gen_+4
+	jmp	.LBB0_20
+.Ltmp4:                                 # Block address taken
+.LBB0_19:                               # %cleanup.cleanup.cont_crit_edge
+	movb	.L__sancov_gen_+5, %al
+	addb	$1, %al
+	movb	%al, .L__sancov_gen_+5
+.LBB0_20:                               # %cleanup.cont
+	movl	164(%rbx), %eax
+	movq	88(%rbx), %rcx          # 8-byte Reload
+	movq	$1172321806, (%rcx)     # imm = 0x45E0360E
+	movq	112(%rbx), %rdx         # 8-byte Reload
+	cmpq	$0, %rdx
+	movl	%eax, 16(%rbx)          # 4-byte Spill
+	je	.LBB0_22
+# %bb.21:
+	movq	80(%rbx), %rax          # 8-byte Reload
+	addq	$0, %rax
+	movq	%rax, %rdi
+	movl	$64, %esi
+	callq	__asan_set_shadow_f5
+	movq	112(%rbx), %rax         # 8-byte Reload
+	movq	504(%rax), %rcx
+	movb	$0, (%rcx)
+	jmp	.LBB0_23
+.LBB0_22:
+	movq	80(%rbx), %rax          # 8-byte Reload
+	movq	$0, (%rax)
+	movq	$0, 8(%rax)
+	movq	$0, 16(%rax)
+	movq	$0, 24(%rax)
+	movq	$0, 32(%rax)
+	movl	$0, 40(%rax)
+.LBB0_23:
+	movl	16(%rbx), %eax          # 4-byte Reload
+	leaq	-8(%rbp), %rsp
+	popq	%rbx
+	popq	%rbp
+	.cfi_def_cfa %rsp, 8
+	retq
+# %bb.24:                               # %unreachable
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
+	.cfi_endproc
+                                        # -- End function
+	.section	.text.lkl_sys_init_loaded_module,"axG",@progbits,"lkl_sys_init_loaded_module$a43592fb44cdb747b695d02c7bf5c1be",comdat
+	.p2align	4, 0x90         # -- Begin function lkl_sys_init_loaded_module
+	.type	lkl_sys_init_loaded_module,@function
+lkl_sys_init_loaded_module:             # @lkl_sys_init_loaded_module
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%rbx
+	andq	$-32, %rsp
+	subq	$160, %rsp
+	movq	%rsp, %rbx
+	.cfi_offset %rbx, -24
+	xorl	%eax, %eax
+	movl	%eax, %ecx
+	cmpl	$0, __asan_option_detect_stack_use_after_return
+	movq	%rdi, 88(%rbx)          # 8-byte Spill
+	movq	%rcx, 80(%rbx)          # 8-byte Spill
+	je	.LBB1_2
+# %bb.1:
+	movl	$128, %edi
+	callq	__asan_stack_malloc_1
+	movq	%rax, 80(%rbx)          # 8-byte Spill
+.LBB1_2:
+	movq	80(%rbx), %rax          # 8-byte Reload
+	cmpq	$0, %rax
+	movq	%rax, %rcx
+	movq	%rax, 72(%rbx)          # 8-byte Spill
+	movq	%rcx, 64(%rbx)          # 8-byte Spill
+	jne	.LBB1_4
+# %bb.3:
+	movq	%rsp, %rax
+	addq	$-128, %rax
+	andq	$-32, %rax
+	movq	%rax, %rsp
+	movq	%rax, 64(%rbx)          # 8-byte Spill
+.LBB1_4:
+	movq	64(%rbx), %rax          # 8-byte Reload
+	movq	%rax, 120(%rbx)
+	movq	%rax, %rcx
+	addq	$32, %rcx
+	movq	%rax, %rdx
+	movq	$1102416563, (%rax)     # imm = 0x41B58AB3
+	movq	$.L___asan_gen_.9, 8(%rax)
+	movq	$lkl_sys_init_loaded_module, 16(%rax)
+	shrq	$3, %rax
+	movq	%rax, %rsi
+	addq	$2147450880, %rsi       # imm = 0x7FFF8000
+	movabsq	$-506381209984437775, %rdi # imm = 0xF8F8F8F8F1F1F1F1
+	movq	%rdi, 2147450880(%rax)
+	movabsq	$-868082074056918792, %rdi # imm = 0xF3F3F3F3F3F3F8F8
+	movq	%rdi, 2147450888(%rax)
+	movb	.L__sancov_gen_.7(%rip), %r8b
+	addb	$1, %r8b
+	movb	%r8b, .L__sancov_gen_.7(%rip)
+	movq	%rbp, %rax
+	movq	__sancov_lowest_stack@GOTTPOFF(%rip), %rdi
+	movq	%fs:(%rdi), %rdi
+	cmpq	%rdi, %rax
+	movq	%rcx, 56(%rbx)          # 8-byte Spill
+	movq	%rdx, 48(%rbx)          # 8-byte Spill
+	movq	%rsi, 40(%rbx)          # 8-byte Spill
+	movq	%rax, 32(%rbx)          # 8-byte Spill
+	jae	.LBB1_6
+# %bb.5:
+	movq	__sancov_lowest_stack@GOTTPOFF(%rip), %rax
+	movq	32(%rbx), %rcx          # 8-byte Reload
+	movq	%rcx, %fs:(%rax)
+.LBB1_6:
+	xorl	%esi, %esi
+	movq	88(%rbx), %rax          # 8-byte Reload
+	movq	%rax, 128(%rbx)
+	movq	40(%rbx), %rcx          # 8-byte Reload
+	movl	$0, 4(%rcx)
+	movw	$0, 8(%rcx)
+	movq	56(%rbx), %rdx          # 8-byte Reload
+	movq	%rdx, %rdi
+	movl	$48, %edx
+	callq	__asan_memset
+	movq	128(%rbx), %rcx
+	movq	56(%rbx), %rdx          # 8-byte Reload
+	shrq	$3, %rdx
+	cmpb	$0, 2147450880(%rdx)
+	movq	%rcx, 24(%rbx)          # 8-byte Spill
+	je	.LBB1_8
+# %bb.7:
+	movq	56(%rbx), %rdi          # 8-byte Reload
+	callq	__asan_report_store8_noabort
+	#APP
+	#NO_APP
+.LBB1_8:
+	movq	56(%rbx), %rax          # 8-byte Reload
+	movq	24(%rbx), %rcx          # 8-byte Reload
+	movq	%rcx, (%rax)
+	movl	$441, %edi              # imm = 0x1B9
+	movq	%rax, %rsi
+	callq	lkl_syscall
+	movq	40(%rbx), %rcx          # 8-byte Reload
+	movl	$-117901064, 4(%rcx)    # imm = 0xF8F8F8F8
+	movw	$-1800, 8(%rcx)         # imm = 0xF8F8
+	movq	48(%rbx), %rdx          # 8-byte Reload
+	movq	$1172321806, (%rdx)     # imm = 0x45E0360E
+	movq	72(%rbx), %rsi          # 8-byte Reload
+	cmpq	$0, %rsi
+	movq	%rax, 16(%rbx)          # 8-byte Spill
+	je	.LBB1_10
+# %bb.9:
+	movabsq	$-723401728380766731, %rax # imm = 0xF5F5F5F5F5F5F5F5
+	movq	40(%rbx), %rcx          # 8-byte Reload
+	movq	%rax, (%rcx)
+	movq	%rax, 8(%rcx)
+	movq	72(%rbx), %rax          # 8-byte Reload
+	movq	120(%rax), %rdx
+	movb	$0, (%rdx)
+	jmp	.LBB1_11
+.LBB1_10:
+	movq	40(%rbx), %rax          # 8-byte Reload
+	movq	$0, (%rax)
+	movq	$0, 8(%rax)
+.LBB1_11:
+	movq	16(%rbx), %rax          # 8-byte Reload
+	leaq	-8(%rbp), %rsp
+	popq	%rbx
+	popq	%rbp
+	.cfi_def_cfa %rsp, 8
+	retq
+.Lfunc_end1:
+	.size	lkl_sys_init_loaded_module, .Lfunc_end1-lkl_sys_init_loaded_module
+	.cfi_endproc
+                                        # -- End function
+	.section	.text.sancov.module_ctor_8bit_counters,"axG",@progbits,sancov.module_ctor_8bit_counters,comdat
+	.p2align	4, 0x90         # -- Begin function sancov.module_ctor_8bit_counters
+	.type	sancov.module_ctor_8bit_counters,@function
+sancov.module_ctor_8bit_counters:       # @sancov.module_ctor_8bit_counters
+	.cfi_startproc
+# %bb.0:
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movabsq	$__start___sancov_cntrs, %rax
+	movabsq	$__stop___sancov_cntrs, %rcx
+	movq	%rax, %rdi
+	movq	%rcx, %rsi
+	callq	__sanitizer_cov_8bit_counters_init
+	movabsq	$__start___sancov_pcs, %rax
+	movabsq	$__stop___sancov_pcs, %rcx
+	movq	%rax, %rdi
+	movq	%rcx, %rsi
+	callq	__sanitizer_cov_pcs_init
+	popq	%rax
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end2:
+	.size	sancov.module_ctor_8bit_counters, .Lfunc_end2-sancov.module_ctor_8bit_counters
+	.cfi_endproc
+                                        # -- End function
+	.text
+	.p2align	4, 0x90         # -- Begin function asan.module_ctor
+	.type	asan.module_ctor,@function
+asan.module_ctor:                       # @asan.module_ctor
+	.cfi_startproc
+# %bb.0:
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	callq	__asan_init
+	callq	__asan_version_mismatch_check_v8
+	movabsq	$__unnamed_1, %rdi
+	movl	$8, %esi
+	callq	__asan_register_globals
+	popq	%rax
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end3:
+	.size	asan.module_ctor, .Lfunc_end3-asan.module_ctor
+	.cfi_endproc
+                                        # -- End function
+	.p2align	4, 0x90         # -- Begin function asan.module_dtor
+	.type	asan.module_dtor,@function
+asan.module_dtor:                       # @asan.module_dtor
+	.cfi_startproc
+# %bb.0:
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movabsq	$__unnamed_1, %rdi
+	movl	$8, %esi
+	callq	__asan_unregister_globals
+	popq	%rax
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end4:
+	.size	asan.module_dtor, .Lfunc_end4-asan.module_dtor
+	.cfi_endproc
+                                        # -- End function
+	.type	this_module,@object     # @this_module
+	.bss
+	.globl	this_module
+	.p2align	5
+this_module:
+	.zero	64
+	.size	this_module, 64
+
+	.type	loglevel,@object        # @loglevel
+	.data
+	.globl	loglevel
+	.p2align	5
+loglevel:
+	.long	8                       # 0x8
+	.zero	60
+	.size	loglevel, 64
+
+	.type	module_path,@object     # @module_path
+	.comm	module_path,512,16
+	.type	.str,@object            # @.str
+	.section	.rodata,"a",@progbits
+	.p2align	5
+.str:
+	.asciz	"/home/admax/via/lkl/drivers/usb/host/uhci-hcd.ko"
+	.zero	47
+	.size	.str, 96
+
+	.type	.str.1,@object          # @.str.1
+	.p2align	5
+.str.1:
+	.asciz	"Initializing LKL...\n"
+	.zero	43
+	.size	.str.1, 64
+
+	.type	.str.2,@object          # @.str.2
+	.p2align	5
+.str.2:
+	.asciz	"mem=4096M noirqdebug loglevel=%d maxcpus=1"
+	.zero	53
+	.size	.str.2, 96
+
+	.type	.str.3,@object          # @.str.3
+	.p2align	5
+.str.3:
+	.asciz	"Error loading module dependency %s: %s\n"
+	.zero	56
+	.size	.str.3, 96
+
+	.type	.str.4,@object          # @.str.4
+	.p2align	5
+.str.4:
+	.asciz	"__this_module"
+	.zero	50
+	.size	.str.4, 64
+
+	.type	.str.5,@object          # @.str.5
+	.p2align	5
+.str.5:
+	.asciz	"Error resolving __this_module for %s: %s\n"
+	.zero	54
+	.size	.str.5, 96
+
+	.type	.L__sancov_gen_,@object # @__sancov_gen_
+	.section	__sancov_cntrs,"aGwo",@progbits,main,comdat,main,unique,1
+.L__sancov_gen_:
+	.zero	6
+	.size	.L__sancov_gen_, 6
+
+	.type	.L__sancov_gen_.6,@object # @__sancov_gen_.6
+	.section	__sancov_pcs,"aGo",@progbits,main,comdat,main,unique,2
+	.p2align	3
+.L__sancov_gen_.6:
+	.quad	main
+	.quad	1
+	.quad	.Ltmp0
+	.quad	0
+	.quad	.Ltmp1
+	.quad	0
+	.quad	.Ltmp2
+	.quad	0
+	.quad	.Ltmp3
+	.quad	0
+	.quad	.Ltmp4
+	.quad	0
+	.size	.L__sancov_gen_.6, 96
+
+	.type	__sancov_gen_cov_switch_values,@object # @__sancov_gen_cov_switch_values
+	.data
+	.p2align	4
+__sancov_gen_cov_switch_values:
+	.quad	2                       # 0x2
+	.quad	32                      # 0x20
+	.quad	0                       # 0x0
+	.quad	1                       # 0x1
+	.size	__sancov_gen_cov_switch_values, 32
+
+	.type	.L__sancov_gen_.7,@object # @__sancov_gen_.7
+	.section	__sancov_cntrs,"aGwo",@progbits,"lkl_sys_init_loaded_module$a43592fb44cdb747b695d02c7bf5c1be",comdat,lkl_sys_init_loaded_module,unique,3
+.L__sancov_gen_.7:
+	.zero	1
+	.size	.L__sancov_gen_.7, 1
+
+	.type	.L__sancov_gen_.8,@object # @__sancov_gen_.8
+	.section	__sancov_pcs,"aGo",@progbits,"lkl_sys_init_loaded_module$a43592fb44cdb747b695d02c7bf5c1be",comdat,lkl_sys_init_loaded_module,unique,4
+	.p2align	3
+.L__sancov_gen_.8:
+	.quad	lkl_sys_init_loaded_module
+	.quad	1
+	.size	.L__sancov_gen_.8, 16
+
+	.hidden	__start___sancov_cntrs
+	.hidden	__stop___sancov_cntrs
+	.hidden	__start___sancov_pcs
+	.hidden	__stop___sancov_pcs
+	.type	.L___asan_gen_,@object  # @___asan_gen_
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_:
+	.asciz	"1 32 256 9 k_cmdline"
+	.size	.L___asan_gen_, 21
+
+	.type	.L___asan_gen_.9,@object # @___asan_gen_.9
+.L___asan_gen_.9:
+	.asciz	"1 32 48 10 lkl_params"
+	.size	.L___asan_gen_.9, 22
+
+	.type	.L___asan_gen_.10,@object # @___asan_gen_.10
+	.section	.rodata,"a",@progbits
+.L___asan_gen_.10:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.10, 19
+
+	.type	.L___asan_gen_.11,@object # @___asan_gen_.11
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.11:
+	.asciz	"this_module"
+	.size	.L___asan_gen_.11, 12
+
+	.type	.L___asan_gen_.12,@object # @___asan_gen_.12
+.L___asan_gen_.12:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.12, 19
+
+	.type	.L___asan_gen_.13,@object # @___asan_gen_.13
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.13:
+	.quad	.L___asan_gen_.12
+	.long	18                      # 0x12
+	.long	7                       # 0x7
+	.size	.L___asan_gen_.13, 16
+
+	.type	.L___asan_gen_.14,@object # @___asan_gen_.14
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.14:
+	.asciz	"loglevel"
+	.size	.L___asan_gen_.14, 9
+
+	.type	.L___asan_gen_.15,@object # @___asan_gen_.15
+.L___asan_gen_.15:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.15, 19
+
+	.type	.L___asan_gen_.16,@object # @___asan_gen_.16
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.16:
+	.quad	.L___asan_gen_.15
+	.long	20                      # 0x14
+	.long	5                       # 0x5
+	.size	.L___asan_gen_.16, 16
+
+	.type	.L___asan_gen_.17,@object # @___asan_gen_.17
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.17:
+	.asciz	"<string literal>"
+	.size	.L___asan_gen_.17, 17
+
+	.type	.L___asan_gen_.18,@object # @___asan_gen_.18
+.L___asan_gen_.18:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.18, 19
+
+	.type	.L___asan_gen_.19,@object # @___asan_gen_.19
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.19:
+	.quad	.L___asan_gen_.18
+	.long	30                      # 0x1e
+	.long	48                      # 0x30
+	.size	.L___asan_gen_.19, 16
+
+	.type	.L___asan_gen_.20,@object # @___asan_gen_.20
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.20:
+	.asciz	"<string literal>"
+	.size	.L___asan_gen_.20, 17
+
+	.type	.L___asan_gen_.21,@object # @___asan_gen_.21
+.L___asan_gen_.21:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.21, 19
+
+	.type	.L___asan_gen_.22,@object # @___asan_gen_.22
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.22:
+	.quad	.L___asan_gen_.21
+	.long	33                      # 0x21
+	.long	21                      # 0x15
+	.size	.L___asan_gen_.22, 16
+
+	.type	.L___asan_gen_.23,@object # @___asan_gen_.23
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.23:
+	.asciz	"<string literal>"
+	.size	.L___asan_gen_.23, 17
+
+	.type	.L___asan_gen_.24,@object # @___asan_gen_.24
+.L___asan_gen_.24:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.24, 19
+
+	.type	.L___asan_gen_.25,@object # @___asan_gen_.25
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.25:
+	.quad	.L___asan_gen_.24
+	.long	34                      # 0x22
+	.long	44                      # 0x2c
+	.size	.L___asan_gen_.25, 16
+
+	.type	.L___asan_gen_.26,@object # @___asan_gen_.26
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.26:
+	.asciz	"<string literal>"
+	.size	.L___asan_gen_.26, 17
+
+	.type	.L___asan_gen_.27,@object # @___asan_gen_.27
+.L___asan_gen_.27:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.27, 19
+
+	.type	.L___asan_gen_.28,@object # @___asan_gen_.28
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.28:
+	.quad	.L___asan_gen_.27
+	.long	44                      # 0x2c
+	.long	25                      # 0x19
+	.size	.L___asan_gen_.28, 16
+
+	.type	.L___asan_gen_.29,@object # @___asan_gen_.29
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.29:
+	.asciz	"<string literal>"
+	.size	.L___asan_gen_.29, 17
+
+	.type	.L___asan_gen_.30,@object # @___asan_gen_.30
+.L___asan_gen_.30:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.30, 19
+
+	.type	.L___asan_gen_.31,@object # @___asan_gen_.31
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.31:
+	.quad	.L___asan_gen_.30
+	.long	48                      # 0x30
+	.long	40                      # 0x28
+	.size	.L___asan_gen_.31, 16
+
+	.type	.L___asan_gen_.32,@object # @___asan_gen_.32
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L___asan_gen_.32:
+	.asciz	"<string literal>"
+	.size	.L___asan_gen_.32, 17
+
+	.type	.L___asan_gen_.33,@object # @___asan_gen_.33
+.L___asan_gen_.33:
+	.asciz	"via_uhci_harness.c"
+	.size	.L___asan_gen_.33, 19
+
+	.type	.L___asan_gen_.34,@object # @___asan_gen_.34
+	.section	.rodata,"a",@progbits
+	.p2align	3
+.L___asan_gen_.34:
+	.quad	.L___asan_gen_.33
+	.long	50                      # 0x32
+	.long	25                      # 0x19
+	.size	.L___asan_gen_.34, 16
+
+	.type	__unnamed_1,@object     # @0
+	.data
+	.p2align	4
+__unnamed_1:
+	.quad	this_module
+	.quad	8                       # 0x8
+	.quad	64                      # 0x40
+	.quad	.L___asan_gen_.11
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.13
+	.quad	0                       # 0x0
+	.quad	loglevel
+	.quad	4                       # 0x4
+	.quad	64                      # 0x40
+	.quad	.L___asan_gen_.14
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.16
+	.quad	0                       # 0x0
+	.quad	.str
+	.quad	49                      # 0x31
+	.quad	96                      # 0x60
+	.quad	.L___asan_gen_.17
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.19
+	.quad	-1                      # 0xffffffffffffffff
+	.quad	.str.1
+	.quad	21                      # 0x15
+	.quad	64                      # 0x40
+	.quad	.L___asan_gen_.20
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.22
+	.quad	-1                      # 0xffffffffffffffff
+	.quad	.str.2
+	.quad	43                      # 0x2b
+	.quad	96                      # 0x60
+	.quad	.L___asan_gen_.23
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.25
+	.quad	-1                      # 0xffffffffffffffff
+	.quad	.str.3
+	.quad	40                      # 0x28
+	.quad	96                      # 0x60
+	.quad	.L___asan_gen_.26
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.28
+	.quad	-1                      # 0xffffffffffffffff
+	.quad	.str.4
+	.quad	14                      # 0xe
+	.quad	64                      # 0x40
+	.quad	.L___asan_gen_.29
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.31
+	.quad	-1                      # 0xffffffffffffffff
+	.quad	.str.5
+	.quad	42                      # 0x2a
+	.quad	96                      # 0x60
+	.quad	.L___asan_gen_.32
+	.quad	.L___asan_gen_.10
+	.quad	0                       # 0x0
+	.quad	.L___asan_gen_.34
+	.quad	-1                      # 0xffffffffffffffff
+	.size	__unnamed_1, 512
+
+	.section	.init_array.1,"aw",@init_array
+	.p2align	3
+	.quad	asan.module_ctor
+	.section	.init_array.2,"aGw",@init_array,sancov.module_ctor_8bit_counters,comdat
+	.p2align	3
+	.quad	sancov.module_ctor_8bit_counters
+	.section	.fini_array.1,"aw",@fini_array
+	.p2align	3
+	.quad	asan.module_dtor
+	.ident	"clang version 10.0.1 (https://github.com/noah-driker/via.git e8332995e9786eb50a329ec665bcaefaa369f90b)"
+	.section	".note.GNU-stack","",@progbits
+	.addrsig
+	.addrsig_sym main
+	.addrsig_sym snprintf
+	.addrsig_sym fprintf
+	.addrsig_sym lkl_fuzz_init_fuzzer
+	.addrsig_sym lkl_start_kernel
+	.addrsig_sym setup_via_uhci_device
+	.addrsig_sym dlopen
+	.addrsig_sym dlerror
+	.addrsig_sym dlsym
+	.addrsig_sym lkl_sys_init_loaded_module
+	.addrsig_sym lkl_syscall
+	.addrsig_sym __sanitizer_cov_trace_switch
+	.addrsig_sym __sanitizer_cov_8bit_counters_init
+	.addrsig_sym sancov.module_ctor_8bit_counters
+	.addrsig_sym __sanitizer_cov_pcs_init
+	.addrsig_sym __asan_report_load8_noabort
+	.addrsig_sym __asan_report_store8_noabort
+	.addrsig_sym __asan_memset
+	.addrsig_sym __asan_stack_malloc_1
+	.addrsig_sym __asan_stack_malloc_3
+	.addrsig_sym __asan_set_shadow_f5
+	.addrsig_sym __asan_register_globals
+	.addrsig_sym __asan_unregister_globals
+	.addrsig_sym __asan_init
+	.addrsig_sym asan.module_ctor
+	.addrsig_sym __asan_version_mismatch_check_v8
+	.addrsig_sym asan.module_dtor
+	.addrsig_sym this_module
+	.addrsig_sym loglevel
+	.addrsig_sym module_path
+	.addrsig_sym .str
+	.addrsig_sym stderr
+	.addrsig_sym .str.1
+	.addrsig_sym .str.2
+	.addrsig_sym lkl_host_ops
+	.addrsig_sym .str.3
+	.addrsig_sym .str.4
+	.addrsig_sym .str.5
+	.addrsig_sym .L__sancov_gen_
+	.addrsig_sym .L__sancov_gen_.6
+	.addrsig_sym __sancov_gen_cov_switch_values
+	.addrsig_sym .L__sancov_gen_.7
+	.addrsig_sym .L__sancov_gen_.8
+	.addrsig_sym __start___sancov_cntrs
+	.addrsig_sym __stop___sancov_cntrs
+	.addrsig_sym __start___sancov_pcs
+	.addrsig_sym __stop___sancov_pcs
+	.addrsig_sym __asan_option_detect_stack_use_after_return
+	.addrsig_sym .L___asan_gen_.10
+	.addrsig_sym __unnamed_1

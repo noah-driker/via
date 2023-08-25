@@ -96,12 +96,12 @@ static int lkl_pci_override_resource(struct pci_dev *dev, void *data)
       }
 
       size = pci_resource_len(dev, i);
-
-      if (pci_resource_flags(dev, i) & IORESOURCE_MEM) {
-	remapped_start =
-	  fuzz_resource_alloc(
-	      fuzz_dev, size, i, pci_resource_flags(dev, i));
-      }
+      remapped_start = pci_resource_start(dev, i);
+//      if (pci_resource_flags(dev, i) & IORESOURCE_MEM) {
+//	remapped_start =
+//	  fuzz_resource_alloc(
+//	      fuzz_dev, size, i, pci_resource_flags(dev, i));
+//      }
 
       if (remapped_start) {
 	/* override values */

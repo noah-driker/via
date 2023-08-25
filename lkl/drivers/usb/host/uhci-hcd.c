@@ -865,6 +865,7 @@ static const char hcd_name[] = "uhci_hcd";
 static int __init uhci_hcd_init(void)
 {
 	int retval = -ENOMEM;
+    printk(KERN_ERR "(NoahD) uhci_hcd.c : __init uhci_hcd_init\n");
 
 	if (usb_disabled())
 		return -ENODEV;
@@ -896,7 +897,7 @@ static int __init uhci_hcd_init(void)
 	if (retval < 0)
 		goto clean1;
 #endif
-
+    printk(KERN_ERR "(NoahD) uhci_hcd.c : __init uhci_hcd_init END\n");
 	return 0;
 
 #ifdef PCI_DRIVER
@@ -943,3 +944,4 @@ module_exit(uhci_hcd_cleanup);
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
+

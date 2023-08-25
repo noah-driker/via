@@ -1068,7 +1068,7 @@ uint64_t do_lkl_init(void) {
 
    // configure device
    if(devtype == LKL_FDEV_TYPE_PCI) {
-      uint64_t mmio_start = 0x10000; // arbitrary value
+      int64_t mmio_start = 0x10000; // arbitrary value
       memset(&pci_conf, 0, sizeof(pci_conf));
       pci_conf.conf.vendor_id = VID;
       pci_conf.conf.device_id = DID;

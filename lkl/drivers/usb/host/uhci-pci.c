@@ -49,6 +49,7 @@ static void uhci_pci_configure_hc(struct uhci_hcd *uhci)
 {
 	struct pci_dev *pdev = to_pci_dev(uhci_dev(uhci));
 
+    printk(KERN_ERR "(NoahD) uhci-pci.c : in uhci_pci_configure_hc\n");
 	/* Enable PIRQ */
 	pci_write_config_word(pdev, USBLEGSUP, USBLEGSUP_DEFAULT);
 
@@ -114,6 +115,7 @@ static int uhci_pci_global_suspend_mode_is_broken(struct uhci_hcd *uhci)
 static int uhci_pci_init(struct usb_hcd *hcd)
 {
 	struct uhci_hcd *uhci = hcd_to_uhci(hcd);
+    printk(KERN_ERR "(NoahD) uhci-pci.c : in uhci_pci_init\n");
 
 	uhci->io_addr = (unsigned long) hcd->rsrc_start;
 
@@ -212,6 +214,7 @@ static int uhci_pci_resume(struct usb_hcd *hcd, bool hibernated)
 {
 	struct uhci_hcd *uhci = hcd_to_uhci(hcd);
 
+    printk(KERN_ERR "(NoahD) uhci-pci.c : in uhci_pci_resume\n");
 	dev_dbg(uhci_dev(uhci), "%s\n", __func__);
 
 	/* Since we aren't in D3 any more, it's safe to set this flag
@@ -284,9 +287,10 @@ static const struct hc_driver uhci_driver = {
 	.hub_control =		uhci_hub_control,
 };
 
-static const struct pci_device_id uhci_pci_ids[] = { {
+static const struct pci_device_id uhci_pci_ids[] = { 
 	/* handle any USB UHCI controller */
-	PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_USB_UHCI, ~0),
+    { PCI_DEVICE( 0x1234, 0x1234),
+	//{PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_USB_UHCI, ~0),
 	}, { /* end: all zeroes */ }
 };
 
@@ -294,6 +298,7 @@ MODULE_DEVICE_TABLE(pci, uhci_pci_ids);
 
 static int uhci_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
+    printk(KERN_ERR "(NoahD) uhci_pci.c : in uhci_pci_probe\n");
 	return usb_hcd_pci_probe(dev, id, &uhci_driver);
 }
 

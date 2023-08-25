@@ -1020,6 +1020,7 @@ int lkl_fuzz_get_devnodes(struct lkl_fuzz_devnode **dn);
 uint64_t lkl_add_virtio_fuzz_dev(struct lkl_fuzz_virtio_dev_config *conf);
 int lkl_virtio_send_to_queue(uint64_t handle, int qidx);
 int lkl_virtio_trigger_irq(void);
+void setup_via_test_device();
 #ifdef __cplusplus
 }
 #endif

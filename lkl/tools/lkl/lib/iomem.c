@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <lkl_host.h>
-
+#include <stdio.h>
 #include "iomem.h"
 
 #define IOMEM_OFFSET_BITS		24
@@ -75,13 +75,16 @@ int lkl_iomem_access(const volatile void *addr, void *res, int size, int write)
 	int ret;
 
 	if (index > MAX_IOMEM_REGIONS || !iomem_regions[index].ops ||
-	    offset + size > iomem_regions[index].size)
+	    offset + size > iomem_regions[index].size) {
 		return -1;
+	}
 
-	if (write)
+	if (write) {
 		ret = iomem->ops->write(iomem->data, offset, res, size);
-	else
+	}
+	else {
 		ret = iomem->ops->read(iomem->data, offset, res, size);
+	}
 
 	return ret;
 }
