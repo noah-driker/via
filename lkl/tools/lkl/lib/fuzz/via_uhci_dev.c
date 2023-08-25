@@ -35,13 +35,16 @@
 static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
     // port from qemu uhci_port_read
 
-	lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_read %d\n", 2);
+    uint32_t val;
+    struct UHCIState* state = (struct UHCIState*) data;
 
-    UHCIDevState *state = (struct UHCIState *)data;
-    uint16_t val;
+	lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_read %d\n", size);
 
-    if (size != sizeof(uint32_t))
-        return -LKL_EINVAL;
+
+    // if (size != sizeof(uint32_t)) {
+    //     lkl_printf("(NoahD) via_uhci_dev : incorrect size %d end of via_uhci_dev_read\n", size);
+    //     return -LKL_EINVAL;
+    // }
 
     switch (offset) {
     case 0x00:
@@ -85,23 +88,21 @@ static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
 
     *(uint32_t *)res = htole32(val);
 
-    return 0;
+    lkl_printf("(NoahD) via_uhci_dev : end of via_uhci_dev_read\n");
 
-    // if (size == 1) {
-    //  *(char *) res = 'a';        
-    // } else if (size == 4) {
-    //  *(int *) res = 12345;
-    // }
+    return 0;
 }
 
 static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
     // port from qemu uhci_port_write
-    lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_read %d\n", 2);
+    uint32_t val;
+    struct UHCIState* state = (struct UHCIState*)data;
+    int ret = 0;
+    
+    lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_write %d\n", size);
 
-    UHCIDevState* state = (struct UHCIState*)data;
-    uint16_t val;
+    val = le32toh(*(uint16_t *) res);
 
-    val = le32toh(*(uint32_t *) res);
 
     switch(offset) {
     case 0x00:
@@ -125,10 +126,14 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
                 // usb_device_reset(port->port.dev);
             }
             //uhci_reset(DEVICE(state));
+            lkl_printf("(NoahD) via_uhci_dev : UHCI_CMD_GRESET end of via_uhci_dev_write\n");
+
             return -1;
         }
         if (val & UHCI_CMD_HCRESET) {
             //uhci_reset(DEVICE(state));
+            lkl_printf("(NoahD) via_uhci_dev : UHCI_CMD_HCRESET end of via_uhci_dev_write\n");
+
             return -1;
         }
         state->cmd = val;
@@ -175,6 +180,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         // USBDevice *dev;
         int n = (offset >> 1) & 7;
         if (n >= NB_PORTS) {
+            lkl_printf("(NoahD) via_uhci_dev : incorrect num ports %d via_uhci_dev_write\n", n);
             return -LKL_EINVAL; // likely -LKL_EINVAL
         }
         //port = &state->ports[n];
@@ -194,6 +200,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         break;
     }
 
+    lkl_printf("(NoahD) via_uhci_dev : end of via_uhci_dev_write\n");
 
 
     return 0;

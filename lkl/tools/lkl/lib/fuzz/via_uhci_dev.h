@@ -64,7 +64,7 @@ typedef struct UHCIPort {
 } UHCIPort;
 
 
-typedef struct UHCIState {
+struct UHCIState {
 	// PCIDevice dev
 	uint8_t* config;
 	// MemoryRegion io_bar
@@ -82,7 +82,7 @@ typedef struct UHCIState {
 
 
 
-} UHCIDevState;
+};
 
 
 
