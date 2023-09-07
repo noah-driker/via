@@ -1375,6 +1375,9 @@ static int hub_configure(struct usb_hub *hub,
 	unsigned full_load;
 	unsigned maxchild;
 
+    printk(KERN_ERR "(NoahD) core/hub.c - hub_configure");
+    printk(KERN_ERR "(NoahD) core/hub.c - hub_configure : dev name %s\n", hub->intfdev->init_name);
+
 	hub->buffer = kmalloc(sizeof(*hub->buffer), GFP_KERNEL);
 	if (!hub->buffer) {
 		ret = -ENOMEM;

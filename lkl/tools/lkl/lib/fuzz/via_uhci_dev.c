@@ -35,10 +35,11 @@
 static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
     // port from qemu uhci_port_read
 
-    uint32_t val;
+    uint64_t val;
     struct UHCIState* state = (struct UHCIState*) data;
 
 	lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_read %d\n", size);
+
 
 
     // if (size != sizeof(uint32_t)) {
@@ -85,8 +86,18 @@ static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
         break;
     } 
 
+    if (size == 1) {
+        *(char *) res = val;
+    } else if (size == 2) {
+        *(short *) res = htole16(val);
+    } else if (size == 4) {
+        *(int *) res = htole32(val);
+    } else if (size == 8) {
+        *(long *) res = htole64(val);
+    }
 
-    *(uint32_t *)res = htole32(val);
+
+    //*(uint32_t *)res = htole32(val);
 
     lkl_printf("(NoahD) via_uhci_dev : end of via_uhci_dev_read\n");
 
@@ -95,13 +106,24 @@ static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
 
 static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
     // port from qemu uhci_port_write
-    uint32_t val;
+    uint64_t val;
     struct UHCIState* state = (struct UHCIState*)data;
     int ret = 0;
     
     lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_write %d\n", size);
 
-    val = le32toh(*(uint16_t *) res);
+    if (size == 1) {
+        val = le64toh(*(char *) res);
+    } else if (size == 2) {
+        val = le64toh(*(short *) res);
+    } else if (size == 4) {
+        val = le64toh(*(int *) res);
+    } else if (size == 8) {
+        val = le64toh(*(long *) res);
+    }
+
+
+    //val = le32toh(*(uint16_t *) res);
 
 
     switch(offset) {
