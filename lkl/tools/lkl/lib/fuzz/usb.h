@@ -1,6 +1,8 @@
+#ifndef __USB_H__
+#define __USB_H__
+
 #include <sys/queue.h>
 #include <stdbool.h>
-#include "via_uhci_dev.h" 
 
 #define USB_SPEED_LOW 0
 #define USB_SPEED_FULL 1
@@ -72,7 +74,7 @@ struct USBDevice {
 	//const USBDescIface *ifaces[USB_MAX_INTERFACES];
 };
 
-OBJECT_DECLARE_TYPE(USBDevice, USBDeviceClass, USB_DEVICE);
+//OBJECT_DECLARE_TYPE(USBDevice, USBDeviceClass, USB_DEVICE);
 
 // typedef void (*USBDeviceRealize)(USBDevice *dev, Error **errp);
 // typedef void (*USBDeviceUnrealize)(USBDevice *dev);
@@ -166,3 +168,5 @@ struct USBCombinedPacket {
 };
 
 void usb_device_handle_reset(USBDevice *dev);
+
+#endif

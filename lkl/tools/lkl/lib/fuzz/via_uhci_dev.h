@@ -88,6 +88,9 @@ typedef struct UHCIState {
 
 } UHCIState;
 
+void uhci_attach(USBPort *port1);
+void uhci_detach(USBPort *port1);
+static void uhci_resume(void *state);
 
 
 

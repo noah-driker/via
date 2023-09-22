@@ -13,11 +13,13 @@
 #include <pthread.h>
 #include <lkl.h>
 #include <lkl_host.h>
-
+#include "/home/admax/via/lkl/tools/lkl/lib/fuzz/usb.h"
+#include "/home/admax/via/lkl/tools/lkl/lib/fuzz/via_uhci_dev.h"
 
 void *this_module = NULL;
 char module_path[512];
 int loglevel = 8;
+
 
 
 int main(void) {
@@ -59,6 +61,54 @@ int main(void) {
 
     fprintf(stdout, "(NoahD) via_uhci_harness : after init loaded\n");
 
-    // lkl_fuzz_set_buf(data_ptr, data_size)lkl
+    UHCIState* state = (UHCIState*) lkl_host_ops.mem_alloc(sizeof(UHCIState));
 
+    if (!state) {
+        fprintf(stderr, "uhci_dev: failed to allocate memory");
+        return -1;
+    }
+
+    memset(state, 0, sizeof(*state));
+
+    USBDevice* usb_dev = (USBDevice*) lkl_host_ops.mem_alloc(sizeof(USBDevice));
+    USBPortOps port_ops = {
+        .attach = uhci_attach,
+        .detach = uhci_detach
+    };
+    for (int i = 0; i < NB_PORTS; i++){
+        state->ports[i].ctrl = 0x0080;
+        state->ports[i].port.ops = &port_ops;
+        state->ports[i].port.index = i;
+        state->ports[i].port.opaque = state;
+        state->ports[i].port.dev = usb_dev;
+    }
+
+    // config irq
+    state->irq = lkl_get_free_irq("virtio");
+
+    // initial values
+    state->cmd = 0;
+    state->status = UHCI_STS_HCHALTED;
+    state->status2 = 0;
+    state->intr = 0;
+    state->fl_base_addr = 0;
+    state->sof_timing = 64;
+
+    usb_dev->speed = USB_SPEED_LOW;
+
+    USBPort* usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
+    usb_port->dev = usb_dev;
+    usb_port->opaque = state;
+    usb_port->index = 0;    
+
+    usb_port->ops = &port_ops;
+
+    fprintf(stdout, "(NoahD) via_uhci_dev : calling uhci_attach\n");
+    uhci_attach(usb_port);
+    fprintf(stdout, "(NoahD) via_uhci_dev : calling uhci_detach\n");
+    uhci_detach(usb_port);    
+
+
+    fprintf(stdout, "(NoahD) via_uhci_harness : HARNESS END\n");
+    return 0;
 }

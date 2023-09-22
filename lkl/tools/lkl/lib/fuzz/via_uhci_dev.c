@@ -271,9 +271,9 @@ static void uhci_resume(void *state) {
         return;
     }
     // if (s->cmd & UHCI_CMD_EGSM) {
-        s->cmd |= UHCI_CMD_FGR;
-        s->status |= UHCI_STS_RD;
-        uhci_update_irq(s);
+    s->cmd |= UHCI_CMD_FGR;
+    s->status |= UHCI_STS_RD;
+    uhci_update_irq(s);
     // }
 }
 
@@ -319,7 +319,7 @@ static void uhci_async_cancel_device(UHCIState *s, USBDevice *dev) {
     }
 }
 
-static void uhci_attach(USBPort *port1) {
+void uhci_attach(USBPort *port1) {
 
     UHCIState *s = port1->opaque;
     UHCIPort *port = &s->ports[port1->index];
@@ -337,7 +337,7 @@ static void uhci_attach(USBPort *port1) {
     uhci_resume(s);
 }
 
-static void uhci_detach(USBPort *port1) {
+void uhci_detach(USBPort *port1) {
     UHCIState *s = port1->opaque;
     UHCIPort *port = &s->ports[port1->index];
 
@@ -364,6 +364,7 @@ static const struct lkl_iomem_ops via_dev_ops = {
 
 static USBPortOps uhci_port_ops = {
     .attach = uhci_attach,
+    .detach = uhci_detach
 };
 
 void setup_via_uhci_device() {
@@ -446,16 +447,16 @@ void setup_via_uhci_device() {
 
     lkl_printf("(NoahD) via_uhci_dev : after lkl_sys_fuzz_configure_dev\n");    
 
-    USBPort* usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
-    usb_port->dev = usb_dev;
-    usb_port->opaque = state;
-    usb_port->index = 0;    
-    usb_port->ops = &uhci_port_ops;
+    // USBPort* usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
+    // usb_port->dev = usb_dev;
+    // usb_port->opaque = state;
+    // usb_port->index = 0;    
+    // usb_port->ops = &uhci_port_ops;
 
-    lkl_printf("(NoahD) via_uhci_dev : calling uhci_attach\n");
-    uhci_attach(usb_port);
-    lkl_printf("(NoahD) via_uhci_dev : calling uhci_detach\n");
-    uhci_detach(usb_port);
+    // lkl_printf("(NoahD) via_uhci_dev : calling uhci_attach\n");
+    // uhci_attach(usb_port);
+    // lkl_printf("(NoahD) via_uhci_dev : calling uhci_detach\n");
+    // uhci_detach(usb_port);
 
     lkl_printf("(NoahD) via_uhci_dev : setup_via_uhci_device END\n");    
 
