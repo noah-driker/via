@@ -46,6 +46,7 @@
 #define NANOSECONDS_PER_SECOND 1000000000LL
 #define FRAME_TIMER_FREQ 1000
 
+// version of QEMU QTAILQ_FOREACH_SAFE
 #define TAILQ_FOREACH_SAFE(var, head, field, next_var)			\
 	for ((var) = ((head)->tqh_first);							\
 		(var) && ((next_var) = ((var)->field.tqe_next), 1);		\

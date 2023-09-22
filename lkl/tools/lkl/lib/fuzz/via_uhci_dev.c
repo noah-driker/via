@@ -230,7 +230,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         if (dev && dev->attached) {
             // port reset
             if ( (val & UHCI_PORT_RESET) && !(port->ctrl & UHCI_PORT_RESET)) {
-                usb_device_reset(dev);
+                //usb_device_reset(dev);
             }
         }
         port->ctrl &= UHCI_PORT_READ_ONLY;
@@ -317,6 +317,7 @@ static void uhci_async_cancel_device(UHCIState *s, USBDevice *dev) {
 }
 
 static void uhci_attach(USBPort *port1) {
+
     UHCIState *s = port1->opaque;
     UHCIPort *port = &s->ports[port1->index];
 
@@ -398,10 +399,15 @@ void setup_via_uhci_device() {
 
     
     // config ports
+    USBDevice* usb_dev = (USBDevice*) lkl_host_ops.mem_alloc(sizeof(USBDevice));
+    usb_dev->speed = USB_SPEED_LOW;
+
     for (int i = 0; i < NB_PORTS; i++){
         state->ports[i].ctrl = 0x0080;
         state->ports[i].port.ops = &uhci_port_ops;
         state->ports[i].port.index = i;
+        state->ports[i].port.opaque = state;
+        state->ports[i].port.dev = usb_dev;
     }
 
     // config irq
@@ -434,5 +440,20 @@ void setup_via_uhci_device() {
     }
 
     handle = lkl_sys_fuzz_configure_dev(LKL_FDEV_TYPE_PCI, &pci_conf);    
+
+    lkl_printf("(NoahD) via_uhci_dev : after lkl_sys_fuzz_configure_dev\n");    
+
+    USBPort* usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
+    usb_port->dev = usb_dev;
+    usb_port->opaque = state;
+    usb_port->index = 0;    
+    usb_port->ops = &uhci_port_ops;
+
+    lkl_printf("(NoahD) via_uhci_dev : calling uhci_attach\n");
+    uhci_attach(usb_port);
+    lkl_printf("(NoahD) via_uhci_dev : calling uhci_detach\n");
+    uhci_detach(usb_port);
+
     lkl_printf("(NoahD) via_uhci_dev : setup_via_uhci_device END\n");    
+
 }
