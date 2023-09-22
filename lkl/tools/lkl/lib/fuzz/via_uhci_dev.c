@@ -338,7 +338,7 @@ static void uhci_detach(USBPort *port1) {
     UHCIState *s = port1->opaque;
     UHCIPort *port = &s->ports[port1->index];
 
-    //uhci_async_cancel_device(s, port1->dev);
+    uhci_async_cancel_device(s, port1->dev);
 
     // set connect status
     if (port->ctrl * UHCI_PORT_CCS) {
