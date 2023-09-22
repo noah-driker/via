@@ -250,6 +250,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
 }
 
 static void uhci_update_irq(UHCIState *s) {
+    lkl_printf("(NoahD) via_uhci_dev : uhci_update_irq\n");
     int level = 0;
     if (((s->status2 & 1) && (s->intr & (1 << 2))) ||
         ((s->status2 & 2) && (s->intr & (1 << 3))) ||
@@ -267,11 +268,11 @@ static void uhci_resume(void *state) {
     if (!s) {
         return;
     }
-    if (s->cmd & UHCI_CMD_EGSM) {
+    // if (s->cmd & UHCI_CMD_EGSM) {
         s->cmd |= UHCI_CMD_FGR;
         s->status |= UHCI_STS_RD;
         uhci_update_irq(s);
-    }
+    // }
 }
 
 static void uhci_async_free(UHCIAsync *async) {
