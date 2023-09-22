@@ -13,8 +13,8 @@
 #include <pthread.h>
 #include <lkl.h>
 #include <lkl_host.h>
-#include "/home/admax/via/lkl/tools/lkl/lib/fuzz/usb.h"
-#include "/home/admax/via/lkl/tools/lkl/lib/fuzz/via_uhci_dev.h"
+#include "../../lkl/tools/lkl/lib/fuzz/usb.h"
+#include "../../lkl/tools/lkl/lib/fuzz/via_uhci_dev.h"
 
 void *this_module = NULL;
 char module_path[512];
