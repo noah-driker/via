@@ -1,21 +1,9 @@
 #ifndef __VIA_UHCI_DEV_H__
 #define __VIA_UHCI_DEV_H__
 
+#include "usb.h"
+
 #define NB_PORTS 2
-
-// struct via_uhci_dev {
-//     uint32_t device_id;
-//     uint32_t vendor_id;
-//     void *base;
-    
-// };
-
-
-// struct PCIDevice {
-// 	uint8_t* config;
-
-
-// };
 
 // UCHI regs
 
@@ -58,13 +46,23 @@
 #define NANOSECONDS_PER_SECOND 1000000000LL
 #define FRAME_TIMER_FREQ 1000
 
+#define TAILQ_FOREACH_SAFE(var, head, field, next_var)			\
+	for ((var) = ((head)->tqh_first);							\
+		(var) && ((next_var) = ((var)->field.tqe_next), 1);		\
+		(var) = (next_var))
+
+
+
+typedef struct UHCIQueue UHCIQueue;
+typedef struct UHCIAsync UHCIAsync;
 
 typedef struct UHCIPort {
+	USBPort port;
 	uint16_t ctrl;
 } UHCIPort;
 
 
-struct UHCIState {
+typedef struct UHCIState {
 	// PCIDevice dev
 	uint8_t* config;
 	// MemoryRegion io_bar
@@ -75,14 +73,19 @@ struct UHCIState {
 	uint16_t frnum; 		// frame number
 	uint16_t fl_base_addr; 	// frame list base address
 	uint8_t sof_timing;
+
+	int irq;
+
+
 	struct itimerspec* frame_timer;
 	timer_t timer_id;
 	long expire_time;
+
+	TAILQ_HEAD(, UHCIQueue) queues;
+
 	UHCIPort ports[NB_PORTS];
 
-
-
-};
+} UHCIState;
 
 
 
