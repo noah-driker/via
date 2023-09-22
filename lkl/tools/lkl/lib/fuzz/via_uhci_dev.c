@@ -261,6 +261,8 @@ static void uhci_update_irq(UHCIState *s) {
         level = 1;
     }
     lkl_trigger_irq(s->irq);
+    lkl_printf("(NoahD) via_uhci_dev : irq triggered\n");
+
 }
 
 static void uhci_resume(void *state) {
