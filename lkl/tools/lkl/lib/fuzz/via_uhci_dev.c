@@ -448,8 +448,8 @@ void timer_callback(int signum) {
 
     if (state->pending_int_mask) {
         state->status2 |= state->pending_int_mask;
-        //state->status |= UHCI_STS_USBINT;
-        state->status = UHCI_STS_USBINT;        
+        state->status |= UHCI_STS_USBINT;
+        //state->status = UHCI_STS_USBINT;        
         lkl_printf("(NoahD) via_uhci_dev : writing s->status in frame_timer\n");
         uhci_update_irq(state);
     }
