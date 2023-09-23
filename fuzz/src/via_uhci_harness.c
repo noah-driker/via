@@ -16,13 +16,17 @@
 #include "../../lkl/tools/lkl/lib/fuzz/usb.h"
 #include "../../lkl/tools/lkl/lib/fuzz/via_uhci_dev.h"
 
+#include <signal.h>
+#include <time.h>
+
 void *this_module = NULL;
 char module_path[512];
 int loglevel = 8;
 
 
-
 int main(void) {
+    state = lkl_host_ops.mem_alloc(sizeof(UHCIState));
+
     long handle;
     char k_cmdline[256];
 
@@ -61,7 +65,7 @@ int main(void) {
 
     fprintf(stdout, "(NoahD) via_uhci_harness : after init loaded\n");
 
-    UHCIState* state = (UHCIState*) lkl_host_ops.mem_alloc(sizeof(UHCIState));
+    //UHCIState* state = (UHCIState*) lkl_host_ops.mem_alloc(sizeof(UHCIState));
 
     if (!state) {
         fprintf(stderr, "uhci_dev: failed to allocate memory");
@@ -75,6 +79,25 @@ int main(void) {
         .attach = uhci_attach,
         .detach = uhci_detach
     };
+
+    // config timer
+    timer_t timer_id;
+    struct sigevent sev;
+    struct sigaction sa;
+    struct itimerspec its;
+
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIGRTMIN;
+    sev.sigev_value.sival_ptr = state;
+
+    timer_create(CLOCK_REALTIME, &sev, &timer_id);
+    its.it_value.tv_nsec = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
+
+    signal(SIGRTMIN, timer_callback);
+
+    state->frame_timer = &its;
+    state->timer_id = timer_id;
+
     for (int i = 0; i < NB_PORTS; i++){
         state->ports[i].ctrl = 0x0080;
         state->ports[i].port.ops = &port_ops;
@@ -93,6 +116,13 @@ int main(void) {
     state->intr = 0;
     state->fl_base_addr = 0;
     state->sof_timing = 64;
+    state->pending_int_mask = 1;
+    state->completions_only = true;
+    state->expire_time = 2;
+    state->frnum = 0;
+    state->frame_bytes = 0;
+    TAILQ_INIT(&state->queues);
+
 
     usb_dev->speed = USB_SPEED_LOW;
 
@@ -105,6 +135,10 @@ int main(void) {
 
     fprintf(stdout, "(NoahD) via_uhci_dev : calling uhci_attach\n");
     uhci_attach(usb_port);
+
+    // trigger timer callback
+    kill(getpid(), SIGRTMIN);    
+    
     fprintf(stdout, "(NoahD) via_uhci_dev : calling uhci_detach\n");
     uhci_detach(usb_port);    
 

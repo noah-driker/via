@@ -2,6 +2,7 @@
 #define __VIA_UHCI_DEV_H__
 
 #include "usb.h"
+#include <stdbool.h>
 
 #define NB_PORTS 2
 
@@ -46,6 +47,9 @@
 #define NANOSECONDS_PER_SECOND 1000000000LL
 #define FRAME_TIMER_FREQ 1000
 
+#define QH_VALID		32
+#define MAX_FRAMES_PER_TICK (QH_VALID / 2)
+
 // version of QEMU QTAILQ_FOREACH_SAFE
 #define TAILQ_FOREACH_SAFE(var, head, field, next_var)			\
 	for ((var) = ((head)->tqh_first);							\
@@ -79,18 +83,29 @@ typedef struct UHCIState {
 
 
 	struct itimerspec* frame_timer;
+	//QEMUBH *bh;
+	uint32_t frame_bytes;
+	bool completions_only;
+
 	timer_t timer_id;
 	long expire_time;
 
 	TAILQ_HEAD(, UHCIQueue) queues;
 
 	UHCIPort ports[NB_PORTS];
+	uint32_t pending_int_mask;
+	uint32_t maxframes;
 
 } UHCIState;
 
 void uhci_attach(USBPort *port1);
 void uhci_detach(USBPort *port1);
+void timer_callback(int signum);
 static void uhci_resume(void *state);
+static void uhci_update_irq(UHCIState *s);
+
+UHCIState* state;
+
 
 
 
