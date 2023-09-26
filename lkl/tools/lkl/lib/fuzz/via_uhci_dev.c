@@ -62,15 +62,16 @@ static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
     uint64_t val;
     UHCIState* state = (UHCIState*) data;
 
-	lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_read %d\n", size);
+	//lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_read %d\n", size);
 
     switch (offset) {
     case 0x00:
         val = state->cmd;
         break;
     case 0x02:
-        lkl_printf("(NoahD) via_uhci_dev : via_uhci_dev_read case 0x02\n");
-        val = state->status;
+        //lkl_printf("(NoahD) via_uhci_dev : via_uhci_dev_read case 0x02\n");
+        //val = state->status;
+        val = 1;
         break;
     case 0x04:
         val = state->intr;
@@ -125,7 +126,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
     UHCIState* state = (UHCIState*)data;
     int ret = 0;
     
-    lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_write %d\n", size);
+    //lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_write %d\n", size);
 
     if (size == 1) {
         val = le64toh(*(char *) res);
@@ -411,7 +412,7 @@ void timer_callback(int signum) {
     state->completions_only = 0;
     //qemu_bh_cancel(s->bh);
 
-    state->cmd = UHCI_CMD_RS; // DELETE LATER
+    //state->cmd = UHCI_CMD_RS; // DELETE LATER
     if (!(state->cmd & UHCI_CMD_RS)) {
        // full stop
        lkl_printf("(NoahD) via_uhci_dev : doing timer delete\n");
