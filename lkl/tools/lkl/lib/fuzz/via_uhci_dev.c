@@ -62,16 +62,15 @@ static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
     uint64_t val;
     UHCIState* state = (UHCIState*) data;
 
-	//lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_read %d\n", size);
+	lkl_printf("(NoahD) via_uhci_dev : read 0x%x\n", offset);
 
     switch (offset) {
     case 0x00:
         val = state->cmd;
         break;
     case 0x02:
-        //lkl_printf("(NoahD) via_uhci_dev : via_uhci_dev_read case 0x02\n");
-        //val = state->status;
-        val = 1;
+        val = state->status;
+        //val = 1;
         break;
     case 0x04:
         val = state->intr;
@@ -126,7 +125,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
     UHCIState* state = (UHCIState*)data;
     int ret = 0;
     
-    //lkl_printf("(NoahD) via_uhci_dev : in via_uhci_dev_write %d\n", size);
+    lkl_printf("(NoahD) via_uhci_dev : write 0x%x\n", offset);
 
     if (size == 1) {
         val = le64toh(*(char *) res);
@@ -148,32 +147,28 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
             // start frame processing
             struct itimerspec remaining_time;
             timer_gettime(state->timer_id, &remaining_time);
+
             state->expire_time = remaining_time.it_value.tv_nsec + (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ);
+
             timer_settime(state->timer_id, 0, state->frame_timer, NULL);
-            //state->status &= ~UHCI_STS_HCHALTED;
-            lkl_printf("(NoahD) via_uhci_dev : state->status write timer 0x00 %d\n", state->status);
+            state->status &= ~UHCI_STS_HCHALTED;
         } else if (!(val & UHCI_CMD_RS)) {
             state->status |= UHCI_STS_HCHALTED;
-            lkl_printf("(NoahD) via_uhci_dev : state->status write 0x00 %d\n", state->status);
         }
         if (val & UHCI_CMD_GRESET) {
-            // UHCIPort *port;
+            UHCIPort *port;
             int i;
 
             // send reset on the USB bus
             for (i = 0; i < NB_PORTS; i++) {
-                // port = &state->ports[i];
-                // usb_device_reset(port->port.dev);
+                port = &state->ports[i];
+                // UNIMPLT usb_device_reset(port->port.dev);
             }
-            //uhci_reset(DEVICE(state));
-            lkl_printf("(NoahD) via_uhci_dev : UHCI_CMD_GRESET end of via_uhci_dev_write\n");
-
+            // UNIMPLT uhci_reset(DEVICE(state));
             return -1;
         }
         if (val & UHCI_CMD_HCRESET) {
-            //uhci_reset(DEVICE(state));
-            lkl_printf("(NoahD) via_uhci_dev : UHCI_CMD_HCRESET end of via_uhci_dev_write\n");
-
+            // UNIMPLT uhci_reset(DEVICE(state));
             return -1;
         }
         state->cmd = val;
@@ -188,9 +183,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         break;
     case 0x02:
         state->status &= ~val;
-        lkl_printf("(NoahD) via_uhci_dev : state->status write 0x02 %d\n", state->status);        
         // the chip spec is not coherent
-        lkl_printf("(NoahD) via_uhci_dev : write case 0x02\n");
         if (val & UHCI_STS_USBINT) {
             state->status2 = 0;
         }
@@ -224,16 +217,16 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         int n = (offset >> 1) & 7;
 
         if (n >= NB_PORTS) {
-            lkl_printf("(NoahD) via_uhci_dev : incorrect num ports %d via_uhci_dev_write\n", n);
             return -LKL_EINVAL; // likely -LKL_EINVAL
         }
+
         port = &state->ports[n];
         dev = port->port.dev;
 
         if (dev && dev->attached) {
             // port reset
             if ( (val & UHCI_PORT_RESET) && !(port->ctrl & UHCI_PORT_RESET)) {
-                //usb_device_reset(dev);
+                // UNIMPLT usb_device_reset(dev);
             }
         }
         port->ctrl &= UHCI_PORT_READ_ONLY;
@@ -246,26 +239,22 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         break;
     }
 
-    lkl_printf("(NoahD) via_uhci_dev : end of via_uhci_dev_write\n");
-
-
     return 0;
 }
 
 static void uhci_update_irq(UHCIState *s) {
     lkl_printf("(NoahD) via_uhci_dev : uhci_update_irq\n");
-    int level = 0;
-    if (((s->status2 & 1) && (s->intr & (1 << 2))) ||
-        ((s->status2 & 2) && (s->intr & (1 << 3))) ||
-        ((s->status & UHCI_STS_USBERR) && (s->intr & (1 << 0))) ||
-        ((s->status & UHCI_STS_RD) && (s->intr & (1 << 1))) ||
-        (s->status & UHCI_STS_HSERR) ||
-        (s->status & UHCI_STS_HCPERR)) {
-        level = 1;
-    }
+    // int level = 0;
+    // if (((s->status2 & 1) && (s->intr & (1 << 2))) ||
+    //     ((s->status2 & 2) && (s->intr & (1 << 3))) ||
+    //     ((s->status & UHCI_STS_USBERR) && (s->intr & (1 << 0))) ||
+    //     ((s->status & UHCI_STS_RD) && (s->intr & (1 << 1))) ||
+    //     (s->status & UHCI_STS_HSERR) ||
+    //     (s->status & UHCI_STS_HCPERR)) {
+    //     level = 1;
+    // }
     lkl_trigger_irq(3);
-    lkl_printf("(NoahD) via_uhci_dev : irq triggered\n");
-
+    lkl_printf("(NoahD) via_uhci_dev uhci_update_irq: called uhci_update_irq\n");
 }
 
 static void uhci_resume(void *state) {
@@ -282,11 +271,11 @@ static void uhci_resume(void *state) {
 }
 
 static void uhci_async_free(UHCIAsync *async) {
-    //usb_packet_cleanup(&async->packet);
+    // UNIMPLT usb_packet_cleanup(&async->packet);
     if (async->buf != async->static_buf) {
-        //g_free(async->buf);
+        // UNIMPLT g_free(async->buf);
     }
-    //g_free(async);
+    // UNIMPLT g_free(async);
 }
 
 static void uhci_async_unlink(UHCIAsync *async) {
@@ -296,8 +285,9 @@ static void uhci_async_unlink(UHCIAsync *async) {
 
 static void uhci_async_cancel(UHCIAsync *async) {
     uhci_async_unlink(async);
-    if (!async->done)
-        //usb_cancel_packet(&async->packet);
+    if (!async->done) {
+        // UNIMPLT usb_cancel_packet(&async->packet);
+    }
     uhci_async_free(async);
 }
 
@@ -309,9 +299,9 @@ static void uhci_queue_free(UHCIQueue *queue, const char *reason) {
         async = TAILQ_FIRST(&queue->asyncs);
         uhci_async_cancel(async);
     }
-    //usb_device_ep_stopped(queue->ep->dev, queue->ep);
+    // UNIMPLT usb_device_ep_stopped(queue->ep->dev, queue->ep);
     TAILQ_REMOVE(&s->queues, queue, next);
-    //g_free(queue);
+    // UNIMPLT g_free(queue);
 }
 static void uhci_async_cancel_device(UHCIState *s, USBDevice *dev) {
     UHCIQueue *queue, *n;
@@ -348,7 +338,7 @@ void uhci_detach(USBPort *port1) {
     uhci_async_cancel_device(s, port1->dev);
 
     // set connect status
-    if (port->ctrl * UHCI_PORT_CCS) {
+    if (port->ctrl & UHCI_PORT_CCS) {
         port->ctrl &= ~UHCI_PORT_CCS;
         port->ctrl |= UHCI_PORT_CSC;
     }
@@ -397,7 +387,8 @@ static void uhci_async_cancel_all(UHCIState *s) {
 
 static void uhci_process_frame(UHCIState *s) {
     //NOP for now
-    s->pending_int_mask = 1;
+    // weird s->pending_int_mask = 1;
+    s->pending_int_mask |= 0;
     lkl_printf("(NoahD) via_uhci_dev : uhci_process_frame");
 }
 
@@ -410,7 +401,7 @@ void timer_callback(int signum) {
     const uint64_t frame_t = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
 
     state->completions_only = 0;
-    //qemu_bh_cancel(s->bh);
+    // UNIMPLT qemu_bh_cancel(s->bh);
 
     //state->cmd = UHCI_CMD_RS; // DELETE LATER
     if (!(state->cmd & UHCI_CMD_RS)) {
@@ -451,14 +442,12 @@ void timer_callback(int signum) {
         state->status2 |= state->pending_int_mask;
         state->status |= UHCI_STS_USBINT;
         //state->status = UHCI_STS_USBINT;        
-        lkl_printf("(NoahD) via_uhci_dev : writing s->status in frame_timer\n");
         uhci_update_irq(state);
     }
     state->pending_int_mask = 0;
     struct itimerspec new_value;
     new_value.it_value.tv_nsec = t_now + frame_t;
     timer_settime(state->timer_id, 0, &new_value, NULL);
-
 }
 
 void setup_via_uhci_device() {
@@ -467,7 +456,6 @@ void setup_via_uhci_device() {
 	int mmio_size = 0x1fffff, i = 0;
 
     struct lkl_fuzz_pci_dev_config pci_conf;
-    UHCIState* state; 
 
     lkl_printf("(NoahD) via_uhci_dev : in setup_via_uhci_device\n");
 
@@ -479,56 +467,56 @@ void setup_via_uhci_device() {
 
     memset(state, 0, sizeof(*state));
 
-    // // config timer
-    // timer_t timer_id;
-    // struct sigevent sev;
-    // struct sigaction sa;
-    // struct itimerspec its;
+    // config timer
+    timer_t timer_id;
+    struct sigevent sev;
+    struct sigaction sa;
+    struct itimerspec its;
 
-    // sev.sigev_notify = SIGEV_SIGNAL;
-    // sev.sigev_signo = SIGRTMIN;
-    // sev.sigev_value.sival_ptr = state;
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIGRTMIN;
+    sev.sigev_value.sival_ptr = state;
 
-    // timer_create(CLOCK_REALTIME, &sev, &timer_id);
-    // its.it_value.tv_nsec = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
+    timer_create(CLOCK_REALTIME, &sev, &timer_id);
+    its.it_value.tv_nsec = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
 
-    // sa.sa_sigaction = timer_callback;
-    // sa.sa_flags = SA_SIGINFO;
-    // sigaction(SIGRTMIN, &sa, NULL);
+    sa.sa_sigaction = timer_callback;
+    sa.sa_flags = SA_SIGINFO;
+    sigaction(SIGRTMIN, &sa, NULL);
 
-    // state->frame_timer = &its;
-    // state->timer_id = timer_id;
+    state->frame_timer = &its;
+    state->timer_id = timer_id;
 
     
-    // // config ports
-    // USBDevice* usb_dev = (USBDevice*) lkl_host_ops.mem_alloc(sizeof(USBDevice));
-    // usb_dev->speed = USB_SPEED_LOW;
+    // config ports
+    USBDevice* usb_dev = (USBDevice*) lkl_host_ops.mem_alloc(sizeof(USBDevice));
+    usb_dev->speed = USB_SPEED_LOW;
 
-    // for (int i = 0; i < NB_PORTS; i++){
-    //     state->ports[i].ctrl = 0x0080;
-    //     state->ports[i].port.ops = &uhci_port_ops;
-    //     state->ports[i].port.index = i;
-    //     state->ports[i].port.opaque = state;
-    //     state->ports[i].port.dev = usb_dev;
-    // }
+    for (int i = 0; i < NB_PORTS; i++){
+        state->ports[i].ctrl = 0x0080;
+        state->ports[i].port.ops = &uhci_port_ops;
+        state->ports[i].port.index = i;
+        state->ports[i].port.opaque = state;
+        state->ports[i].port.dev = usb_dev;
+    }
 
-    // // config irq
-    // //state->irq = lkl_get_free_irq("virtio");
+    // config irq
+    //state->irq = lkl_get_free_irq("virtio");
 
-    // // initial values
-    // state->cmd = 0;
-    // state->status = UHCI_STS_HCHALTED;
-    // lkl_printf("(NoahD) via_uhci_dev : state->status init %d\n", state->status);    
-    // state->status2 = 0;
-    // state->intr = 0;
-    // state->fl_base_addr = 0;
-    // state->sof_timing = 64;
-    // state->pending_int_mask = 1;
-    // state->completions_only = true;
-    // state->expire_time = 2;
-    // state->frnum = 0;
-    // state->frame_bytes = 0;
-    // TAILQ_INIT(&state->queues);
+    // initial values
+    state->cmd = 0;
+    state->status = UHCI_STS_HCHALTED;
+    lkl_printf("(NoahD) via_uhci_dev : state->status init %d\n", state->status);    
+    state->status2 = 0;
+    state->intr = 0;
+    state->fl_base_addr = 0;
+    state->sof_timing = 64;
+    state->pending_int_mask = 1;
+    state->completions_only = true;
+    state->expire_time = 2;
+    state->frnum = 0;
+    state->frame_bytes = 0;
+    TAILQ_INIT(&state->queues);
 
     void* base_addr = register_iomem(state, mmio_size, &via_dev_ops);	
     int64_t mmio_start = (uint64_t)base_addr;
@@ -552,16 +540,14 @@ void setup_via_uhci_device() {
 
     lkl_printf("(NoahD) via_uhci_dev : after lkl_sys_fuzz_configure_dev\n");    
 
-    // USBPort* usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
-    // usb_port->dev = usb_dev;
-    // usb_port->opaque = state;
-    // usb_port->index = 0;    
-    // usb_port->ops = &uhci_port_ops;
 
-    // lkl_printf("(NoahD) via_uhci_dev : calling uhci_attach\n");
-    // uhci_attach(usb_port);
-    // lkl_printf("(NoahD) via_uhci_dev : calling uhci_detach\n");
-    // uhci_detach(usb_port);
+    // setup port for attach/detach in harness
+    usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
+    usb_port->dev = usb_dev;
+    usb_port->opaque = state;
+    usb_port->index = 0;    
+    usb_port->ops = &uhci_port_ops;
+
 
     lkl_printf("(NoahD) via_uhci_dev : setup_via_uhci_device END\n");    
 

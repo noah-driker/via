@@ -105,6 +105,7 @@ static void uhci_resume(void *state);
 static void uhci_update_irq(UHCIState *s);
 
 UHCIState* state;
+USBPort* usb_port;
 
 
 
