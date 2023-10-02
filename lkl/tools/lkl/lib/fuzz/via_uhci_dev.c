@@ -32,9 +32,6 @@
 #define IORESOURCE_MEM		0x00000200
 #define IORESOURCE_IO       0x00000100
 
-//int pci_class = 0;
-
-
 
 struct UHCIAsync {
     USBPacket packet;
@@ -243,16 +240,6 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
 }
 
 static void uhci_update_irq(UHCIState *s) {
-    lkl_printf("(NoahD) via_uhci_dev : uhci_update_irq\n");
-    // int level = 0;
-    // if (((s->status2 & 1) && (s->intr & (1 << 2))) ||
-    //     ((s->status2 & 2) && (s->intr & (1 << 3))) ||
-    //     ((s->status & UHCI_STS_USBERR) && (s->intr & (1 << 0))) ||
-    //     ((s->status & UHCI_STS_RD) && (s->intr & (1 << 1))) ||
-    //     (s->status & UHCI_STS_HSERR) ||
-    //     (s->status & UHCI_STS_HCPERR)) {
-    //     level = 1;
-    // }
     lkl_trigger_irq(3);
     lkl_printf("(NoahD) via_uhci_dev uhci_update_irq: called uhci_update_irq\n");
 }
@@ -397,7 +384,6 @@ void timer_callback(int signum) {
     uint64_t t_now, t_last_run;
     int i, frames;
 
-    lkl_printf("(NoahD) via_uhci_dev : timer_callback is called\n");
     const uint64_t frame_t = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
 
     state->completions_only = 0;
@@ -406,13 +392,11 @@ void timer_callback(int signum) {
     //state->cmd = UHCI_CMD_RS; // DELETE LATER
     if (!(state->cmd & UHCI_CMD_RS)) {
        // full stop
-       lkl_printf("(NoahD) via_uhci_dev : doing timer delete\n");
        timer_delete(state->timer_id);
        uhci_async_cancel_all(state);
        state->status |= UHCI_STS_HCHALTED;
        return;
     }
-    lkl_printf("(NoahD) via_uhci_dev : after timer delete in callback\n");
 
     t_last_run = state->expire_time - frame_t;
     struct timespec ts;
@@ -445,6 +429,7 @@ void timer_callback(int signum) {
         uhci_update_irq(state);
     }
     state->pending_int_mask = 0;
+
     struct itimerspec new_value;
     new_value.it_value.tv_nsec = t_now + frame_t;
     timer_settime(state->timer_id, 0, &new_value, NULL);
@@ -455,9 +440,9 @@ void setup_via_uhci_device() {
     long handle;    
 	int mmio_size = 0x1fffff, i = 0;
 
-    struct lkl_fuzz_pci_dev_config pci_conf;
 
     lkl_printf("(NoahD) via_uhci_dev : in setup_via_uhci_device\n");
+
 
     state = lkl_host_ops.mem_alloc(sizeof(*state));
     if (!state) {
@@ -467,7 +452,7 @@ void setup_via_uhci_device() {
 
     memset(state, 0, sizeof(*state));
 
-    // config timer
+    // setup frame timer
     timer_t timer_id;
     struct sigevent sev;
     struct sigaction sa;
@@ -506,7 +491,6 @@ void setup_via_uhci_device() {
     // initial values
     state->cmd = 0;
     state->status = UHCI_STS_HCHALTED;
-    lkl_printf("(NoahD) via_uhci_dev : state->status init %d\n", state->status);    
     state->status2 = 0;
     state->intr = 0;
     state->fl_base_addr = 0;
@@ -521,6 +505,7 @@ void setup_via_uhci_device() {
     void* base_addr = register_iomem(state, mmio_size, &via_dev_ops);	
     int64_t mmio_start = (uint64_t)base_addr;
 
+    struct lkl_fuzz_pci_dev_config pci_conf;
     memset(&pci_conf, 0, sizeof(pci_conf));
     
     pci_conf.conf.vendor_id = 0x1234;
@@ -538,9 +523,6 @@ void setup_via_uhci_device() {
 
     handle = lkl_sys_fuzz_configure_dev(LKL_FDEV_TYPE_PCI, &pci_conf);    
 
-    lkl_printf("(NoahD) via_uhci_dev : after lkl_sys_fuzz_configure_dev\n");    
-
-
     // setup port for attach/detach in harness
     usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
     usb_port->dev = usb_dev;
@@ -548,7 +530,7 @@ void setup_via_uhci_device() {
     usb_port->index = 0;    
     usb_port->ops = &uhci_port_ops;
 
-
     lkl_printf("(NoahD) via_uhci_dev : setup_via_uhci_device END\n");    
 
 }
+

@@ -30,8 +30,6 @@ int main(void) {
     long handle;
     char k_cmdline[256];
 
-    //handle = lkl_sys_fuzz_configure_dev(LKL_FDEV_TYPE_PCI, &pci_conf);
-
     // load and initialize pci module
     snprintf(module_path, sizeof(module_path), "/home/admax/via/lkl/drivers/usb/host/uhci-hcd.ko");
 
@@ -51,7 +49,6 @@ int main(void) {
         fprintf(stderr, "Error loading module dependency %s: %s\n", module_path, dlerror());
 	return -1;
     }
-    fprintf(stdout, "(NoahD) via_uhci_harness : after dlopen\n");
 
 
     this_module = dlsym(module_handle, "__this_module");
@@ -59,7 +56,6 @@ int main(void) {
         fprintf(stderr, "Error resolving __this_module for %s: %s\n", module_path, dlerror());
 	return -1;
     }
-    fprintf(stdout, "(NoahD) via_uhci_harness : after dlsym\n");
 
     lkl_sys_init_loaded_module(this_module);
 

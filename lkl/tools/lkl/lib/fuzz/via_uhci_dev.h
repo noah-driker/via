@@ -108,6 +108,4 @@ UHCIState* state;
 USBPort* usb_port;
 
 
-
-
 #endif
