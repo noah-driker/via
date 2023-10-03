@@ -177,10 +177,8 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id,
 	int			retval;
 	int			hcd_irq = 0;
 
-    printk(KERN_ERR "(NoahD) hcd-pci.c : usb_hcd_pci_probe\n");
 
 	if (usb_disabled()) {
-        printk(KERN_ERR "(NoahD) hcd-pci.c : ENODEV usb_disabled()\n");
 		return -ENODEV;
     }
 	if (!id)
@@ -190,7 +188,6 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id,
 		return -EINVAL;
 
 	if (pci_enable_device(dev) < 0) {
-        printk(KERN_ERR "(NoahD) hcd-pci.c : ENODEV pci_enable_device(dev) < 0\n");
 		return -ENODEV;
     }
 	/*
@@ -204,7 +201,6 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id,
 			"Found HC with no IRQ. Check BIOS/PCI %s setup!\n",
 				pci_name(dev));
 			retval = -ENODEV;
-            printk(KERN_ERR "(NoahD) hcd-pci.c : ENODEV driver->flags & HCD_MASK\n");
 			goto disable_pci;
 		}
 		hcd_irq = pci_irq_vector(dev, 0);
@@ -240,12 +236,9 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id,
 	} else {
 		/* UHCI */
 		int	region;
-        printk(KERN_ERR "(NoahD) hcd-pci.c : IORESOURCE_IO %d", IORESOURCE_IO);
 		for (region = 0; region < PCI_STD_NUM_BARS; region++) {
-            printk(KERN_ERR "(NoahD) hcd-pci.c : pci_resource_flags(dev, region) %d\n", pci_resource_flags(dev, region));
 			if (!(pci_resource_flags(dev, region) &
 					IORESOURCE_MEM)) {
-                printk(KERN_ERR "(NoahD) hcd-pci.c : continue!\n");
 				continue;
             }
 			hcd->rsrc_start = pci_resource_start(dev, region);
@@ -254,14 +247,12 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id,
 			if (devm_request_mem_region(&dev->dev, hcd->rsrc_start,
 					hcd->rsrc_len, driver->description)) {
 //                readb(hcd->rsrc_start);
-                printk(KERN_ERR "(NoahD) hcd-pci.c : devm_request_region");
 				break;
             }
 		}
 		if (region == PCI_ROM_RESOURCE) {
 			dev_dbg(&dev->dev, "no i/o regions available\n");
 			retval = -EBUSY;
-            printk(KERN_ERR "(NoahD) hcd-pci.c : region %d, retval %d", region, retval);
 			goto put_hcd;
 		}
 	}
@@ -299,16 +290,12 @@ int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id,
 
 put_hcd:
 	usb_put_hcd(hcd);
-    printk(KERN_ERR "(NoahD) hcd-pci.c : put hcd\n");
 free_irq_vectors:
-    printk(KERN_ERR "(NoahD) hcd-pci.c : free_irq_vectors\n");
 	if ((driver->flags & HCD_MASK) < HCD_USB3)
 		pci_free_irq_vectors(dev);
 disable_pci:
-    printk(KERN_ERR "(NoahD) hcd-pci.c : disable_pci\n");
 	pci_disable_device(dev);
 	dev_err(&dev->dev, "init %s fail, %d\n", pci_name(dev), retval);
-    printk(KERN_ERR "(NoahD) hcd-pci.c : end disable_pci\n");
 	return retval;
 }
 EXPORT_SYMBOL_GPL(usb_hcd_pci_probe);

@@ -40,35 +40,29 @@ int main(void) {
     lkl_fuzz_init_fuzzer();
     lkl_start_kernel(&lkl_host_ops, k_cmdline);
     
-    fprintf(stdout, "(NoahD) via_uhci_harness : before setup_via_uhci_device\n");
     // invoke setup function for pci uhci device
     setup_via_uhci_device();
     
     void *module_handle = dlopen(module_path, RTLD_GLOBAL | RTLD_NOW);
     if (!module_handle) {
         fprintf(stderr, "Error loading module dependency %s: %s\n", module_path, dlerror());
-	return -1;
+        return -1;
     }
 
 
     this_module = dlsym(module_handle, "__this_module");
     if (!this_module) {
         fprintf(stderr, "Error resolving __this_module for %s: %s\n", module_path, dlerror());
-	return -1;
+        return -1;
     }
 
     lkl_sys_init_loaded_module(this_module);
 
+
     fprintf(stdout, "(NoahD) via_uhci_harness : calling uhci_attach\n");
     uhci_attach(usb_port);
+    sleep(1);
 
-    // trigger timer callback
-    kill(getpid(), SIGRTMIN);    
-    fprintf(stdout, "(NoahD) just triggered timer callback\n");
-    
-    fprintf(stdout, "(NoahD) via_uhci_harness : calling uhci_detach\n");
-    uhci_detach(usb_port);    
 
-    fprintf(stdout, "(NoahD) via_uhci_harness : HARNESS END\n");
     return 0;
 }

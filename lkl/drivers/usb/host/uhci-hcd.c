@@ -457,15 +457,11 @@ static irqreturn_t uhci_irq(struct usb_hcd *hcd)
 	 * interrupt cause.  Contrary to the UHCI specification, the
 	 * "HC Halted" status bit is persistent: it is RO, not R/WC.
 	 */
-    printk(KERN_ERR "(NoahD) uhci-hcd.c : CALLED uhci_irq\n");
 	status = uhci_readw(uhci, USBSTS);
     
-    printk(KERN_ERR "(NoahD) uhci-hcd.c : status %d, ~USBSTS_HCH %d\n", status, ~USBSTS_HCH);
 	if (!(status & ~USBSTS_HCH)) {	/* shared interrupt, not mine */
-        printk(KERN_ERR "(NoahD) uhci-hcd.c : shared interrupt\n");
 		return IRQ_NONE;
     }
-    printk(KERN_ERR "(NoahD) uhci-hcd.c : PAST shared interrupt\n");
 	uhci_writew(uhci, status, USBSTS);		/* Clear it */
 
 	spin_lock(&uhci->lock);

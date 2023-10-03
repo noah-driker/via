@@ -25,14 +25,6 @@
 #include <sys/queue.h>
 
 
-#define VID 0xc0300
-#define DID 0x00
-
-
-#define IORESOURCE_MEM		0x00000200
-#define IORESOURCE_IO       0x00000100
-
-
 struct UHCIAsync {
     USBPacket packet;
     uint8_t static_buf[64];
@@ -53,13 +45,14 @@ struct UHCIQueue {
     int8_t valid;
 };
 
+/*
+    port of QEMU uhci_port_read
+        driver expects val to be returned rather than just dereferencing, setting res
+*/
 static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
-    // port from qemu uhci_port_read
 
     uint64_t val;
     UHCIState* state = (UHCIState*) data;
-
-	lkl_printf("(NoahD) via_uhci_dev : read 0x%x\n", offset);
 
     switch (offset) {
     case 0x00:
@@ -67,7 +60,6 @@ static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
         break;
     case 0x02:
         val = state->status;
-        //val = 1;
         break;
     case 0x04:
         val = state->intr;
@@ -112,18 +104,16 @@ static int via_uhci_dev_read(void *data, int offset, void *res, int size) {
     }
 
     return val;
-    //*(uint32_t *)res = htole32(val);
-
 }
 
+
+/*
+    port from QEMU uhci_port_write
+*/
 static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
-    // port from qemu uhci_port_write
     uint64_t val;
     UHCIState* state = (UHCIState*)data;
-    int ret = 0;
     
-    lkl_printf("(NoahD) via_uhci_dev : write 0x%x\n", offset);
-
     if (size == 1) {
         val = le64toh(*(char *) res);
     } else if (size == 2) {
@@ -135,20 +125,30 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
     }
 
 
-    //val = le32toh(*(uint16_t *) res);
-
-
     switch(offset) {
     case 0x00:
         if ( (val & UHCI_CMD_RS) && !(state->cmd & UHCI_CMD_RS)) {
             // start frame processing
-            struct itimerspec remaining_time;
-            timer_gettime(state->timer_id, &remaining_time);
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &ts);
+            state->expire_time = ts.tv_sec * NANOSECONDS_PER_SECOND + ts.tv_nsec + NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
 
-            state->expire_time = remaining_time.it_value.tv_nsec + (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ);
+            /*
+                it_value specifies initial expiry time for interval timer
+                it_interval specifies the interval for subsequent expirys
+            */
+            struct itimerspec its;
 
-            timer_settime(state->timer_id, 0, state->frame_timer, NULL);
+            its.it_value.tv_sec = (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ) / NANOSECONDS_PER_SECOND;
+            its.it_value.tv_nsec = (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ) % NANOSECONDS_PER_SECOND;
+            
+            its.it_interval.tv_sec = (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ) / NANOSECONDS_PER_SECOND;;
+            its.it_interval.tv_nsec = (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ) % NANOSECONDS_PER_SECOND;
+            
+            timer_settime(state->timer_id, 0, &its, NULL);
+
             state->status &= ~UHCI_STS_HCHALTED;
+
         } else if (!(val & UHCI_CMD_RS)) {
             state->status |= UHCI_STS_HCHALTED;
         }
@@ -159,13 +159,19 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
             // send reset on the USB bus
             for (i = 0; i < NB_PORTS; i++) {
                 port = &state->ports[i];
-                // UNIMPLT usb_device_reset(port->port.dev);
+
+                // used in QEMU, not yet implemented
+                //usb_device_reset(port->port.dev);
             }
-            // UNIMPLT uhci_reset(DEVICE(state));
+            uhci_reset(state);
+
+            // not sure what to return here, -1 at least seems not to break anything
             return -1;
         }
         if (val & UHCI_CMD_HCRESET) {
-            // UNIMPLT uhci_reset(DEVICE(state));
+            uhci_reset(state);
+            
+            // not sure what to return here, -1 at least seems not to break anything            
             return -1;
         }
         state->cmd = val;
@@ -180,6 +186,7 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         break;
     case 0x02:
         state->status &= ~val;
+
         // the chip spec is not coherent
         if (val & UHCI_STS_USBINT) {
             state->status2 = 0;
@@ -214,7 +221,9 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         int n = (offset >> 1) & 7;
 
         if (n >= NB_PORTS) {
-            return -LKL_EINVAL; // likely -LKL_EINVAL
+            // the configuration is incorrect
+            // assuming EINVAL is the right return code
+            return -LKL_EINVAL;
         }
 
         port = &state->ports[n];
@@ -223,7 +232,8 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
         if (dev && dev->attached) {
             // port reset
             if ( (val & UHCI_PORT_RESET) && !(port->ctrl & UHCI_PORT_RESET)) {
-                // UNIMPLT usb_device_reset(dev);
+                // QEMU uses this, not yet implemented
+                //usb_device_reset(dev);
             }
         }
         port->ctrl &= UHCI_PORT_READ_ONLY;
@@ -241,7 +251,6 @@ static int via_uhci_dev_write(void *data, int offset, void *res, int size) {
 
 static void uhci_update_irq(UHCIState *s) {
     lkl_trigger_irq(3);
-    lkl_printf("(NoahD) via_uhci_dev uhci_update_irq: called uhci_update_irq\n");
 }
 
 static void uhci_resume(void *state) {
@@ -249,20 +258,25 @@ static void uhci_resume(void *state) {
     if (!s) {
         return;
     }
-    // if (s->cmd & UHCI_CMD_EGSM) {
+
+    // in QEMU's uhci_resume this is a conditional IRQ trigger
+    // s->cmd is not set correctly elsewhere
+
+    //if (s->cmd & UHCI_CMD_EGSM) {
     s->cmd |= UHCI_CMD_FGR;
     s->status |= UHCI_STS_RD;
-    lkl_printf("(NoahD) via_uhci_dev : state->status resume %d\n", s->status);    
     uhci_update_irq(s);
-    // }
+    //}
 }
 
 static void uhci_async_free(UHCIAsync *async) {
-    // UNIMPLT usb_packet_cleanup(&async->packet);
+    // QEMU uses this, not yet implemented
+    //usb_packet_cleanup(&async->packet);
+
     if (async->buf != async->static_buf) {
-        // UNIMPLT g_free(async->buf);
+        //g_free(async->buf);
     }
-    // UNIMPLT g_free(async);
+    //g_free(async);
 }
 
 static void uhci_async_unlink(UHCIAsync *async) {
@@ -273,7 +287,8 @@ static void uhci_async_unlink(UHCIAsync *async) {
 static void uhci_async_cancel(UHCIAsync *async) {
     uhci_async_unlink(async);
     if (!async->done) {
-        // UNIMPLT usb_cancel_packet(&async->packet);
+        // QEMU uses this, not yet implemented
+        //usb_cancel_packet(&async->packet);
     }
     uhci_async_free(async);
 }
@@ -286,9 +301,11 @@ static void uhci_queue_free(UHCIQueue *queue, const char *reason) {
         async = TAILQ_FIRST(&queue->asyncs);
         uhci_async_cancel(async);
     }
-    // UNIMPLT usb_device_ep_stopped(queue->ep->dev, queue->ep);
+    // QEMU uses this, not yet implemented
+    //usb_device_ep_stopped(queue->ep->dev, queue->ep);
+
     TAILQ_REMOVE(&s->queues, queue, next);
-    // UNIMPLT g_free(queue);
+    //g_free(queue);
 }
 static void uhci_async_cancel_device(UHCIState *s, USBDevice *dev) {
     UHCIQueue *queue, *n;
@@ -317,6 +334,7 @@ void uhci_attach(USBPort *port1) {
 
     uhci_resume(s);
 }
+
 
 void uhci_detach(USBPort *port1) {
     UHCIState *s = port1->opaque;
@@ -373,37 +391,63 @@ static void uhci_async_cancel_all(UHCIState *s) {
 }
 
 static void uhci_process_frame(UHCIState *s) {
-    //NOP for now
-    // weird s->pending_int_mask = 1;
-    s->pending_int_mask |= 0;
+    // NOP for now, need to implement
     lkl_printf("(NoahD) via_uhci_dev : uhci_process_frame");
 }
 
+void uhci_reset(UHCIState* s)  {
+    // partially implemented, just enough to support timing and irqs
+    s->cmd = 0;
+    s->status = UHCI_STS_HCHALTED;
+    s->status2 = 0;
+    s->intr = 0;
+    s->fl_base_addr = 0;
+    s->sof_timing = 64;
+    uhci_async_cancel_all(s);
+    uhci_update_irq(s);
+}
+
+/*
+    port of QEMU uhci_frame_timer
+
+    QEMU timer callback supports passing data with pointer, 
+        the time.h interval timer does not support this
+        the device state is a global variable instead
+*/
 void timer_callback(int signum) {
-    //UHCIState *s = (UHCIState *) opaque;
     uint64_t t_now, t_last_run;
     int i, frames;
 
     const uint64_t frame_t = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
 
     state->completions_only = 0;
-    // UNIMPLT qemu_bh_cancel(s->bh);
 
-    //state->cmd = UHCI_CMD_RS; // DELETE LATER
+    // QEMU uses this, not yet implemented
+    //qemu_bh_cancel(s->bh);
+
     if (!(state->cmd & UHCI_CMD_RS)) {
-       // full stop
-       timer_delete(state->timer_id);
-       uhci_async_cancel_all(state);
-       state->status |= UHCI_STS_HCHALTED;
-       return;
+        // full stop
+        struct itimerspec new_value;
+        new_value.it_value.tv_sec = 0;
+        new_value.it_value.tv_nsec = 0;
+        timer_settime(state->timer_id, 0, &new_value, NULL);
+        timer_delete(state->timer_id);
+
+        uhci_async_cancel_all(state);
+        state->status |= UHCI_STS_HCHALTED;
+        return;
     }
 
+    // state->expire_time is absolute time (not relative like it_value from interval timer)
     t_last_run = state->expire_time - frame_t;
+
     struct timespec ts;
+    // get absolute realtime
     clock_gettime(CLOCK_REALTIME, &ts);
-    t_now = ts.tv_nsec;
+    t_now = (ts.tv_sec*NANOSECONDS_PER_SECOND) + ts.tv_nsec;
 
     frames = (t_now - t_last_run) / frame_t;
+
     if (frames > state->maxframes) {
         int skipped = frames - state->maxframes;
         state->expire_time += skipped * frame_t;
@@ -425,23 +469,20 @@ void timer_callback(int signum) {
     if (state->pending_int_mask) {
         state->status2 |= state->pending_int_mask;
         state->status |= UHCI_STS_USBINT;
-        //state->status = UHCI_STS_USBINT;        
         uhci_update_irq(state);
     }
     state->pending_int_mask = 0;
 
-    struct itimerspec new_value;
-    new_value.it_value.tv_nsec = t_now + frame_t;
-    timer_settime(state->timer_id, 0, &new_value, NULL);
+    /*  
+        QEMU updates the timer expiry time here
+        since the timer used here is an interval timer, this is not necessary
+    */
 }
 
 void setup_via_uhci_device() {
 
     long handle;    
 	int mmio_size = 0x1fffff, i = 0;
-
-
-    lkl_printf("(NoahD) via_uhci_dev : in setup_via_uhci_device\n");
 
 
     state = lkl_host_ops.mem_alloc(sizeof(*state));
@@ -454,20 +495,22 @@ void setup_via_uhci_device() {
 
     // setup frame timer
     timer_t timer_id;
-    struct sigevent sev;
-    struct sigaction sa;
-    struct itimerspec its;
 
+    struct itimerspec its;
+    its.it_value.tv_sec = (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ) / NANOSECONDS_PER_SECOND;
+    its.it_value.tv_nsec = (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ) % NANOSECONDS_PER_SECOND;
+    its.it_interval.tv_nsec = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
+    
+    struct sigevent sev;
     sev.sigev_notify = SIGEV_SIGNAL;
-    sev.sigev_signo = SIGRTMIN;
-    sev.sigev_value.sival_ptr = state;
+    sev.sigev_signo = SIGUSR1;
+    sev.sigev_value.sival_ptr = &timer_id;
 
     timer_create(CLOCK_REALTIME, &sev, &timer_id);
-    its.it_value.tv_nsec = NANOSECONDS_PER_SECOND/FRAME_TIMER_FREQ;
+    timer_settime(timer_id, 0, &its, NULL);
 
-    sa.sa_sigaction = timer_callback;
-    sa.sa_flags = SA_SIGINFO;
-    sigaction(SIGRTMIN, &sa, NULL);
+    // install timer_callback as signal handler for SIGUSR1
+    signal(SIGUSR1, timer_callback);
 
     state->frame_timer = &its;
     state->timer_id = timer_id;
@@ -485,9 +528,6 @@ void setup_via_uhci_device() {
         state->ports[i].port.dev = usb_dev;
     }
 
-    // config irq
-    //state->irq = lkl_get_free_irq("virtio");
-
     // initial values
     state->cmd = 0;
     state->status = UHCI_STS_HCHALTED;
@@ -497,7 +537,7 @@ void setup_via_uhci_device() {
     state->sof_timing = 64;
     state->pending_int_mask = 1;
     state->completions_only = true;
-    state->expire_time = 2;
+    state->expire_time = (NANOSECONDS_PER_SECOND / FRAME_TIMER_FREQ);
     state->frnum = 0;
     state->frame_bytes = 0;
     TAILQ_INIT(&state->queues);
@@ -524,13 +564,11 @@ void setup_via_uhci_device() {
     handle = lkl_sys_fuzz_configure_dev(LKL_FDEV_TYPE_PCI, &pci_conf);    
 
     // setup port for attach/detach in harness
+    // usb_port is global so it can be used in the harness
     usb_port = (USBPort*) lkl_host_ops.mem_alloc(sizeof(USBPort));
     usb_port->dev = usb_dev;
     usb_port->opaque = state;
     usb_port->index = 0;    
     usb_port->ops = &uhci_port_ops;
-
-    lkl_printf("(NoahD) via_uhci_dev : setup_via_uhci_device END\n");    
-
 }
 

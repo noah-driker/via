@@ -66,7 +66,6 @@ static const struct hc_driver uhci_platform_hc_driver = {
 
 static int uhci_hcd_platform_probe(struct platform_device *pdev)
 {
-    printk(KERN_ERR "(NoahD) uhci-platform.c : uhci_hcd_platform_probe");
 	struct device_node *np = pdev->dev.of_node;
 	struct usb_hcd *hcd;
 	struct uhci_hcd	*uhci;

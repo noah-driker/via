@@ -65,7 +65,7 @@ Make sure that `$CC` is set correclty (`source via/fuzz/setup_env` should do thi
 ```
 cd via/lkl
 make -C tools/lkl CC=$CC HOSTCC=$CC FUZZ=1 LLVM_IAS=1 clean
-make -n -C tools/lkl CC=$CC HOSTCC=$CC FUZZ=1 LLVM_IAS=1 PYTHON=python3.10 -j 12
+make -C tools/lkl CC=$CC HOSTCC=$CC FUZZ=1 LLVM_IAS=1 PYTHON=python3.10 -j 12
 make drivers modules ARCH=lkl CC=$CC HOSTCC=$CC FUZZ=1 LLVM_IAS=1 PYTHON=python3.10 -j 12
 export ASAN_OPTIONS=use_sigaltstack=false
 find . -name '*ko' -exec cp {} $VIA_PG_PATH/targets_fuzz \;

@@ -7,7 +7,6 @@
 #define NB_PORTS 2
 
 // UCHI regs
-
 #define UHCI_CMD_FGR      (1 << 4)
 #define UHCI_CMD_EGSM     (1 << 3)
 #define UHCI_CMD_GRESET   (1 << 2)
@@ -50,12 +49,11 @@
 #define QH_VALID		32
 #define MAX_FRAMES_PER_TICK (QH_VALID / 2)
 
-// version of QEMU QTAILQ_FOREACH_SAFE
+// QEMU uses this macro, however, it doesn't exist in the lkl queue header 
 #define TAILQ_FOREACH_SAFE(var, head, field, next_var)			\
 	for ((var) = ((head)->tqh_first);							\
 		(var) && ((next_var) = ((var)->field.tqe_next), 1);		\
 		(var) = (next_var))
-
 
 
 typedef struct UHCIQueue UHCIQueue;
@@ -98,14 +96,14 @@ typedef struct UHCIState {
 
 } UHCIState;
 
-void uhci_attach(USBPort *port1);
-void uhci_detach(USBPort *port1);
-void timer_callback(int signum);
-static void uhci_resume(void *state);
-static void uhci_update_irq(UHCIState *s);
-
 UHCIState* state;
 USBPort* usb_port;
 
+void uhci_attach(USBPort *port1);
+void uhci_detach(USBPort *port1);
+void uhci_reset(UHCIState* state);
+void timer_callback(int signum);
+static void uhci_resume(void *state);
+static void uhci_update_irq(UHCIState *s);
 
 #endif
